@@ -1,0 +1,18 @@
+body{
+    padding: 0;
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #DFDFDF;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100vh;
+}
+
+
+.Content_objects{
+    display: flex;
+    flex-direction: row;
+
+}
+

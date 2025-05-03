@@ -1,0 +1,100 @@
+body{ 
+  height: 100vh;
+}
+
+.login-container {
+    display: flex;
+
+    height: 100vh;
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #DFDFDF;
+  }
+  
+  .background-section {
+    flex: 1;
+    width: 100vh;
+    background: url('./fundo_login.png') no-repeat center center;
+    background-size: cover;
+    height: 90%;
+  }
+  
+  .login-box {
+    width: 100%;
+    max-width: 360px;
+    padding: 40px 30px;
+    margin: auto;
+    margin-right: 4%;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    text-align: left;
+    position: relative;
+  }
+  
+  .login-box::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 45px;
+    width: 100%;
+    background-color: #ff6f00;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+  }
+  
+  .login-box h2 {
+    margin-top: 50px;
+    margin-bottom: 20px;
+    text-align: center;
+    color: #333;
+  }
+  
+  .login-box label {
+    font-size: 14px;
+    color: #444;
+    margin-bottom: 5px;
+    display: block;
+  }
+  
+  .login-box input {
+    margin-bottom: 15px;
+    padding: 10px;
+    font-size: 15px;
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    outline: none;
+  }
+  
+  .forgot-password {
+    text-align: right;
+    margin-bottom: 20px;
+    font-size: 12px;
+    color: #ff6f00;
+    cursor: pointer;
+  }
+  
+  .login-box button {
+    width: 100%;
+    padding: 10px;
+    font-size: 15px;
+    background-color: #1c1c1c;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .login-box button:hover {
+    background-color: #333;
+  }
+  
+  .mensagem {
+    margin-top: 10px;
+    color: red;
+    text-align: center;
+  }
+  
