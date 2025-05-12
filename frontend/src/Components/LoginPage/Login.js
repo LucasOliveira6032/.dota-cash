@@ -26,7 +26,7 @@ function Login() {
         localStorage.setItem('usuarioId', dados.usuarioId);
         localStorage.setItem('senhaPadrao', dados.trocaSenhaObrigatoria); // salva flag
 
-        navigate('/principal');
+        navigate('/Inicio');
       } else {
         setMensagem(dados.mensagem || 'Usuário ou senha inválidos.');
       }

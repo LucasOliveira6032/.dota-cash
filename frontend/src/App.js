@@ -2,7 +2,11 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
 import Login from './Components/LoginPage/Login';
-import Principal from './Components/Principal/principal';
+import LayoutSistema from './Components/Principal/LayoutSistema';
+import Vendas from './Components/VendasPage/vendas';
+import HistVendas from './Components/Hist_Vendas/hist_vendas';
+import Estoque from './Components/EstoquePage/estoque';
+import Relatorios from './Components/RealatoriosPage/relatorios';
 
 function App() {
   /*  teste de conexão com backend
@@ -30,7 +34,13 @@ function App() {
       <Router>
       <Routes>
         <Route path="/" element={<Login />} />
-        <Route path="/principal" element={<Principal />} />
+
+        <Route path="/Inicio" element={<LayoutSistema />}>
+          <Route index element={<Vendas />}/>
+          <Route path='Histórico-de-vendas' element={<HistVendas />}/>
+          <Route path='Estoque' element={<Estoque />}/>
+          <Route path='Relatórios' element={<Relatorios />}/>
+        </Route>
         {/* Outras rotas, como dashboard ou estoque, podem ser adicionadas aqui */}
       </Routes>
     </Router>
@@ -39,3 +49,9 @@ function App() {
 }
 
 export default App;
+
+/*Verificar com o chat, pois quando o path em
+<Route path="/Vendas" element={<LayoutSistema />}> 
+está apenas com a /, ao iniciar o sistema o acesso 
+vai direto para a tela layout sistema e 
+não para a pagina de login*/

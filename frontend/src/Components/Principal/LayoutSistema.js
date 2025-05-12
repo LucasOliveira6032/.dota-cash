@@ -1,11 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import Modal from 'react-modal';
 import './principal.css';
+import Sidebar from '../SideBar/sideBar';
+import { Outlet } from 'react-router-dom';
+
+
+
+
+
 
 
 Modal.setAppElement('#root'); 
 
-function Principal() {
+function LayoutSistema() {
   const [mostrarModal, setMostrarModal] = useState(false);
   const [novaSenha, setNovaSenha] = useState('');
   const usuarioId = localStorage.getItem('usuarioId');  
@@ -59,10 +66,6 @@ function Principal() {
 
   return (
     <div className='Content_objects'>
-      <main className="viewConteudo">
-          <h1>Bem Vindo</h1>
-      </main>
-
       <Modal isOpen={mostrarModal} contentLabel="Trocar Senha">
         <h2>Trocar Senha</h2>
         <input
@@ -73,8 +76,15 @@ function Principal() {
         />
         <button onClick={trocarSenha}>Confirmar</button>
       </Modal>
+
+      <Sidebar/>
+
+      <section className='viewTelas'>
+          <img src='/logo.svg' className='logo-pdv teste'></img>
+          <Outlet/> 
+      </section>
     </div>
   );
 }
 
-export default Principal;
+export default LayoutSistema;
