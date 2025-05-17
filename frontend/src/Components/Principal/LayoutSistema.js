@@ -78,9 +78,9 @@ function LayoutSistema() {
       </Modal>
 
       <Sidebar/>
-
+      
       <section className='viewTelas'>
-          <img src='/logo.svg' className='logo-pdv teste'></img>
+          <img src='./logo.svg' className='logo'></img>
           <Outlet/> 
       </section>
     </div>

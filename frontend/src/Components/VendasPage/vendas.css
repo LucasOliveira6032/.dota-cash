@@ -1,0 +1,114 @@
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  overflow: hidden;
+  font-family: sans-serif;
+  box-sizing: border-box;
+}
+
+
+.cont-principal{
+    width: 100%;
+    height: calc(99% - 8vh);
+    margin-top: 8vh;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+
+}
+
+.cont-controler{
+    width: 66%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.driver-line{
+    width: 0.5vh;
+    height: 100%;
+    border-radius: 1rem;
+    background-color: #937F7F;
+}
+
+.view-nota{
+    width: 32%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/*edição de componentes dentro do Controler*/
+.list-itens-controll{
+    width: 98%;
+    height: 90%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow: auto;
+}
+
+.cancelar{
+    width: 16vh;
+    height: 6%;
+    margin-left: 80%;
+    border: none;
+    border-radius: 10vh;
+    font-size: larger;
+    font-weight: 600;
+    background-color: tomato;
+    color: #DFDFDF;
+    cursor: pointer;
+}
+/*Fim da edição de campos do Controler*/
+
+/*Edição dos campos dentro do view-nota*/
+.infos-client{
+    width: 90%;
+    height: 8vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.list-itens{
+    width: 90%;
+    height: 60vh;
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+
+}
+
+.print-view{
+    width: 90%;
+    height: 8vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.scann{
+    width: 90%;
+    height: 8vh;
+    display: flex;
+    flex-direction: column; 
+    border: none;
+    border-radius: 3rem;
+    font-size: x-large;
+    padding-left: 1rem;
+    filter: drop-shadow(0 0 1rem #4443433d);
+}
+
+.visibilidade {
+  visibility: hidden;
+}
