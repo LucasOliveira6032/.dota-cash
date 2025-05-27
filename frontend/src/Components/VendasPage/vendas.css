@@ -54,6 +54,7 @@ html, body {
     display: flex;
     flex-direction: column;
     align-items: center;
+    flex: 1;
     overflow: auto;
 }
 
@@ -66,8 +67,9 @@ html, body {
     font-size: larger;
     font-weight: 600;
     background-color: tomato;
-    color: #DFDFDF;
+    color: #FFFF;
     cursor: pointer;
+    filter: drop-shadow(0 0 1rem #4443433d);
 }
 /*Fim da edição de campos do Controler*/
 
@@ -109,8 +111,65 @@ html, body {
     filter: drop-shadow(0 0 1rem #4443433d);
 }
 
+.scann:focus {
+  outline: none;
+  box-shadow: none; /* só por garantia */
+}
+
 .visibilidade {
   visibility: hidden;
+}
+
+.item-control{
+    width: 98%;
+    min-height: 36px;
+    margin-top: 1vh;
+    padding-left: 8px;
+    padding-right: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-radius: 2rem;
+    background-color: #ffff;
+    position: relative;
+}
+
+.buttonEdits{
+    border: none;
+    background-color: #ffff;
+    opacity: 0;
+    transform: translateX(10px) scale(0.95);
+    transition: opacity 0.3 ease, transform 0.3s ease;
+    pointer-events: none;
+}
+
+.item-control:hover .buttonEdits,
+.item-control:focus-within .buttonEdits {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+    pointer-events: auto;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.6); /* fundo escuro com transparência */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.modal-pix {
+  background-color: white;
+  padding: 2rem;
+  border-radius: 1rem;
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
 }
 
 .toast-alert {

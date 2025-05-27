@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
 import './vendas.css';
-import Modal from "../Modal/modal"
 
 function Vendas() {
     const [produtos, setProdutos] = useState([]);
@@ -26,150 +25,387 @@ function Vendas() {
     const listItensRef = useRef(null);
     const listItensControllRef = useRef(null);
 
+    const [modoQuantidade, setModoQuantidade] = useState(false);
+    const [indiceEdicao, setIndiceEdicao] = useState(null);
+
+    const [modoCreditoDebito, setModoCreditoDebito] = useState(false);
+    const [modoParcelamento, setModoParcelamento] = useState(false);
+    const [etapaCartao, setEtapaCartao] = useState(""); // '', 'debito', 'credito'
+
+
     //variaveis lógica de cancelamento
-    const [itensVenda, setItensVenda] = useState([]);
-    const [valorTotal, setValorTotal] = useState(0);
+
     const [cpfCliente, setCpfCliente] = useState("");
     const [nomeCliente, setNomeCliente] = useState("");
-    const [mensagem, setMensagem] = useState("");
+
+    const [verificandoMaquina, setVerificandoMaquina] = useState(false);
+
+    const [modalPixAberto, setModalPixAberto] = useState(false);
+
+
+
+
 
     const cancelarVenda = () => {
-  // Limpa os produtos adicionados à venda
-  setProdutos([]);
+      // Limpa os produtos adicionados à venda
+      setProdutos([]);
+      // Limpa o Total mostrado no controle da venda (print-view)
+      setTotal(0);
 
-  // Limpa outros campos, se existirem:
-  setValorTotal(0);
-  setCpfCliente("");
-  setNomeCliente("");
-  setFormaPagamento("");
+      // Limpa outros campos, se existirem:
+      setTotal(0);
+      setCpfCliente("");
+      setNomeCliente("");
+      setFormaPagamento("");
 
-  // (Opcional) Mostra mensagem de confirmação:
-  setMensagem("Venda cancelada com sucesso.");
+      // Reseta o topo Controle onde vai nome e CPF do cliente
+      setClienteMsg("Controle");
+  
+      // Limpa o placeholder e a frase de leitura no p
+      setCodigo("");
+      setCpfSolicitado(false);
+      setModoCPF(false);
+      setFasePagamento(false);
+      setEsperandoValorRecebido(false);
+      setTroco(null);
+      setValorPagoTotal(0);
+      setValorRestante(0);
 
-  // Se houver campos controlados manualmente (inputRefs etc), limpe-os aqui também
+      // (Opcional) Mostra mensagem de confirmação:
+      setMensagemAviso("Venda cancelada com sucesso.");
+    };
+
+const adicionarProduto = async () => {
+  try {
+    const codigoLimpo = (codigo || '').trim();
+
+    if (!codigoLimpo) {
+      mostrarAviso("Digite um código válido!");
+      return;
+    }
+
+    console.log("codigo digitado:", JSON.stringify(codigoLimpo));
+
+    const response = await fetch(`http://localhost:3001/produtos/${codigoLimpo}`);
+
+    if (!response.ok) {
+      mostrarAviso("Produto não encontrado.");
+      return;
+    }
+
+    const produto = await response.json();
+    const precoFormatado = produto.preco != null ? parseFloat(produto.preco) : 0;
+
+    setProdutos((prevProdutos) => {
+      const produtosAtualizados = [...prevProdutos];
+      const produtoExistenteIndex = produtosAtualizados.findIndex(p => p.id === produto.id);
+
+      if (produtoExistenteIndex !== -1) {
+        // Produto já existe, atualiza quantidade e subtotal
+        const produtoExistente = produtosAtualizados[produtoExistenteIndex];
+        const novaQuantidade = produtoExistente.quantidade + 1;
+        produtosAtualizados[produtoExistenteIndex] = {
+          ...produtoExistente,
+          quantidade: novaQuantidade,
+          subtotal: precoFormatado * novaQuantidade,
+        };
+      } else {
+        // Produto não existe ainda, adiciona novo
+        const novoProduto = {
+          id: produto.id,
+          codigo: produto.codigo_barras,
+          nome: produto.nome,
+          preco: precoFormatado,
+          quantidade: 1,
+          subtotal: precoFormatado,
+        };
+        produtosAtualizados.push(novoProduto);
+      }
+
+      // Atualiza o total a partir dos subtotais atuais
+      const novoTotal = produtosAtualizados.reduce((acc, p) => acc + p.subtotal, 0);
+      setTotal(novoTotal);
+
+      return produtosAtualizados;
+    });
+
+    setCodigo(""); // Limpa o campo após adicionar
+    console.log("Produto retornado da API:", produto);
+  } catch (error) {
+    console.error("Erro ao adicionar produto:", error);
+    mostrarAviso("Erro ao buscar produto.");
+  }
 };
 
 
 
-    const adicionarProduto = () => {
-        if (codigo.trim() === "") return;
 
-            const produtoBipado = simularBuscaProduto(codigo);
-            const subtotal = produtoBipado.preco * produtoBipado.quantidade;
+    const editarProduto = (index, novaQuantidade) => {
+      setProdutos((prevProdutos) => {
+      if (novaQuantidade <= 0) return mostrarAviso("Quantidade inválida");
+      const atualizados = [...prevProdutos];
+      const produto = atualizados[index];
+      const novoSubtotal = produto.preco * novaQuantidade;
+      atualizados[index] = {
+        ...produto,
+        quantidade: novaQuantidade,
+        subtotal: novoSubtotal,
+      };
 
-            setProdutos(prev => [...prev, { ...produtoBipado, subtotal }]);
-            setTotal(prev => prev + subtotal);
-            setCodigo("");
-    };
+      // Recalcular o total com base nos produtos atualizados
+      const novoTotal = atualizados.reduce(
+        (acc, p) => acc + p.subtotal,
+        0
+      );
+      setTotal(novoTotal);
 
-    const simularBuscaProduto = (codigo) => {
-        return {
-            codigo,
-            nome: "Produto Exemplo",
-            preco: 50.00,
-            quantidade: 2,
-        };
+      return atualizados;
+      });
+    }
+
+    const excluirProduto = (index) => {
+      const produtoRemovido = produtos[index];
+      const novosProdutos = produtos.filter((_, i) => i !== index);
+
+      if (!produtoRemovido) return mostrarAviso("Produto não encontrado para remover");
+
+      setProdutos(novosProdutos);
+      setTotal((prevTotal) => prevTotal - produtoRemovido.subtotal);
     };
 
     useEffect(() => {
-    if (listItensRef.current) {
+      if (listItensRef.current) {
         listItensRef.current.scrollTop = listItensRef.current.scrollHeight;
-    }
-    if (listItensControllRef.current) {
+      }
+      if (listItensControllRef.current) {
         listItensControllRef.current.scrollTop = listItensControllRef.current.scrollHeight;
-    }
-}, [produtos]);
+      }
+    }, [produtos]);
 
 
     const handleKeyDown = (e) => {
-        if (e.key === "Enter") {
-            if (modoCPF) {
-              const cpfValido = validarCPF(codigo);
-              if (!cpfValido) {
-                mostrarAviso("CPF inválido. Verifique e tente novamente.");
-                setCodigo("");
-                return;
-              }
-                
-                console.log("CPF digitado:", codigo);
-                setClienteMsg(`Cliente não encontrado - ${codigo}`);
-                setCodigo("");
-                setModoCPF(false);
-                setCpfSolicitado(false);
-                setFasePagamento(true);
-                return;
-            }
+      if (e.key === "Enter") {
+        if (verificandoMaquina) return; 
+        console.log("Enter pressionado - código:", codigo, "| estados:", {
+          modoQuantidade,
+          modoCPF,
+          fasePagamento,
+          esperandoValorRecebido,
+          modoParcelamento,
+          modoCreditoDebito,
+          cpfSolicitado,
+        });
+        if (modoQuantidade && e.key === "Enter") {
+          const qtd = parseInt(codigo);
+          if (!isNaN(qtd) && qtd > 0 && indiceEdicao !== null) {
+            editarProduto(indiceEdicao, qtd);
+            setModoQuantidade(false);
+            setIndiceEdicao(null);
+            setCodigo(""); // limpa o campo após edição
+          } else {
+            setMensagemAviso("Quantidade inválida");
+          }
+          return;
+        }
+        // Verificação de estado da venda
+        if (produtos.length === 0 && codigo === "") {
+          mostrarAviso("Nenhum produto adicionado. Escaneie um produto para iniciar.");
+          setCpfSolicitado(false);
+          setModoCPF(false);
+          setFasePagamento(false);
+          return;
+        }
 
-        if (esperandoValorRecebido) {
-            const valorRecebido = parseFloat(codigo.replace(",", "."));
-
-            if (!isNaN(valorRecebido)) {
-                const novoValorPago = valorPagoTotal + valorRecebido;
-
-                if (novoValorPago >= total) {
-                    // Pagamento suficiente
-                    const valorTroco = novoValorPago - total;
-                    setTroco(valorTroco);
-                    setEsperandoValorRecebido(false);
-                    setValorPagoTotal(0);
-                    setValorRestante(0);
-                    setFormaPagamento(""); // Limpa forma de pagamento
-                } else {
-                    // Pagamento parcial
-                    const restante = total - novoValorPago;
-                    setValorPagoTotal(novoValorPago);
-                    setValorRestante(restante);
-                    setEsperandoValorRecebido(false);  // Aguarda nova forma
-                    setFasePagamento(true);            // Reativa escolha de forma
-                }
-            }
-
+        if (modoCPF) {
+          const cpfValido = validarCPF(codigo);
+          if (!cpfValido) {
+            mostrarAviso("CPF inválido. Verifique e tente novamente.");
             setCodigo("");
             return;
+          }
+                  
+          console.log("CPF digitado:", codigo);
+          setClienteMsg(`Cliente não encontrado - ${codigo}`);  
+          setCodigo("");
+          setModoCPF(false);
+          setCpfSolicitado(false);
+          setFasePagamento(true);
+          return;
+        }
+
+        if (esperandoValorRecebido) {
+          const valorRecebido = parseFloat(codigo.replace(",", "."));
+
+          if (!isNaN(valorRecebido)) {
+            const novoValorPago = valorPagoTotal + valorRecebido;
+            if (novoValorPago >= total) {
+              // Pagamento suficiente
+              const valorTroco = novoValorPago - total;
+              setTroco(valorTroco);
+              setEsperandoValorRecebido(false);
+              setValorPagoTotal(0);
+              setValorRestante(0);
+              setFormaPagamento(""); // Limpa forma de pagamento
+            } else {
+              // Pagamento parcial
+              const restante = total - novoValorPago;
+              setValorPagoTotal(novoValorPago);
+              setValorRestante(restante);
+              setEsperandoValorRecebido(false);  // Aguarda nova forma
+              setFasePagamento(true);            // Reativa escolha de forma
+            }
+          }
+
+          setCodigo("");
+          return;
+        }
+
+        if (modoParcelamento) {
+          const parcelas = parseInt(codigo.trim());
+          if (parcelas >= 1 && parcelas <= 10) {
+            setFormaPagamento((prev) => prev + (prev ? " + " : "") + `Cartão - Crédito (${parcelas}x)`);
+            
+            // Bloqueia entrada e exibe mensagem de verificação
+            setModoParcelamento(false);
+            setVerificandoMaquina(true);
+            setEtapaCartao("verificando");
+            setMensagemAviso("Venda finalizada com sucesso!");
+            setCodigo("");
+            
+            if (valorRestante > 0) {
+                const pagamentoFinal = valorRestante || total;
+                const novoValorPago = valorPagoTotal + pagamentoFinal;
+
+                if (novoValorPago >= total) {
+                  setTroco(novoValorPago - total);
+                  setValorPagoTotal(null);
+                  setValorRestante(null);
+                } else {
+                  setValorPagoTotal(novoValorPago);
+                  setValorRestante(total - novoValorPago);
+                  setFasePagamento(true);
+                }
+              }
+
+            finalizarVenda();
+          }
+          return;
+        }
+
+        if (modoCreditoDebito) {
+          const escolha = (codigo || '').trim();
+
+          if (escolha === "1") {
+            setFormaPagamento((prev) => prev + (prev ? " + " : "") + "Cartão - Débito");
+            setModoCreditoDebito(false);
+            setFasePagamento(false);
+            setCodigo("");
+            setEtapaCartao("debito");
+            finalizarVenda();
+            
+            
+          } else if (escolha === "2") {
+            setModoCreditoDebito(false);
+            setModoParcelamento(true);
+            setCodigo("");
+            setEtapaCartao("credito");
+            
+          }
+          return;
         }
 
         if (fasePagamento) {
-            const forma = {
-                "1": "Dinheiro",
-                "2": "Cartão",
-                "3": "Pix",
-                "4": "Crédito em haver",
-            }[codigo.trim()];
+          const valor = (codigo || '').trim();
 
-            if (forma) {
-                setFormaPagamento((prev) => prev + (prev ? " + " + forma : forma));
-                setFasePagamento(false);
-                setCodigo("");
-
-                if (forma === "Dinheiro" || valorRestante > 0) {
-                    setEsperandoValorRecebido(true);
-                } else {
-                    // Forma de pagamento não exige entrada de valor, assume pagamento completo
-                    const pagamentoFinal = valorRestante || total;
-                    const novoValorPago = valorPagoTotal + pagamentoFinal;
-
-                    if (novoValorPago >= total) {
-                        setTroco(novoValorPago - total);
-                        setValorPagoTotal(0);
-                        setValorRestante(0);
-                    } else {
-                        setValorPagoTotal(novoValorPago);
-                        setValorRestante(total - novoValorPago);
-                        setFasePagamento(true);
-                    }
-                }
-            }
+          if (valor === "2") {
+            setModoCreditoDebito(true);
+            setCodigo("");
             return;
+          }
+
+          const forma = {
+            "1": "Dinheiro",
+            "3": "Pix",
+          }[valor];
+          
+          if (!forma) {
+            mostrarAviso("Selecione a forma de pagamento!");
+            setCodigo("");
+            return;
+          }
+
+          if (forma === "Dinheiro") {
+            if (!esperandoValorRecebido) {
+              setEsperandoValorRecebido(true);
+              setCodigo("");
+              return;
+            }
+
+            const valorTratado = codigo.replace(/[^\d.,]/g, "").trim().replace(",", ".");
+            const recebido = parseFloat(valorTratado);
+
+            if (isNaN(recebido) || recebido <= 0) {
+              mostrarAviso("Valor inválido. Digite um número maior que zero.");
+              setCodigo("");
+              return;
+            }
+
+            const novoValorPago = Number((valorPagoTotal + recebido).toFixed(2));
+            const pagamentoFinalArred = Number(total.toFixed(2));
+            const trocoCalculado = Number((novoValorPago - pagamentoFinalArred).toFixed(2));
+
+            if (novoValorPago >= pagamentoFinalArred) {
+              setTroco(trocoCalculado > 0 ? trocoCalculado : null);
+              setValorPagoTotal(0);
+              setValorRestante(0);
+              setEsperandoValorRecebido(false);
+              setCodigo("");
+              setMensagemAviso("Venda finalizada com sucesso!");
+
+              setTimeout(() => finalizarVenda(), 3000);
+            } else {
+              const valorRestanteArred = Number((pagamentoFinalArred - novoValorPago).toFixed(2));
+              setValorPagoTotal(novoValorPago);
+              setValorRestante(valorRestanteArred);
+              setMensagemAviso(`Faltam R$ ${valorRestanteArred.toFixed(2)}`);
+              setCodigo("");
+              finalizarVenda();
+            }
+
+          } else if (forma === "Pix") {
+            setModalPixAberto(true);
+
+          } else {
+            const novoValorPago = Number((valorPagoTotal + total).toFixed(2));
+            const totalArred = Number(total.toFixed(2));
+            const trocoCalculado = Number((novoValorPago - totalArred).toFixed(2));
+
+            if (novoValorPago >= totalArred) {
+              setTroco(trocoCalculado > 0 ? trocoCalculado : null);
+              setValorPagoTotal(0);
+              setValorRestante(0);
+              setMensagemAviso("Venda finalizada com sucesso!");
+              setTimeout(() => finalizarVenda(), 3000);
+            } else {
+              const valorRestanteArred = Number((totalArred - novoValorPago).toFixed(2));
+              setValorPagoTotal(novoValorPago);
+              setValorRestante(valorRestanteArred);
+              setFasePagamento(true);
+            }
+          }
+
+
+          return;
         }
 
 
-        if (codigo.trim() === "") {
-            setCpfSolicitado(true);
-            return;
+        if ((codigo || '').trim() === "") {
+          setCpfSolicitado(true);
+          return;
         }
 
         if (cpfSolicitado) {
-          const resposta = codigo.trim().toLowerCase();
+          const resposta = (codigo || '').trim().toLowerCase();
 
           if (resposta === "s" || resposta === "sim") {
             setModoCPF(true);
@@ -183,12 +419,17 @@ function Vendas() {
             setCodigo("");
             return;
           }
-        }
 
+          // Se a resposta não for válida, mostra aviso
+          mostrarAviso("Digite sim ou não");
+          setCodigo("");
+          return;
+        }
 
         // Só cai aqui se nenhuma das condições acima for verdadeira
-        adicionarProduto();
-        }
+        const ok = adicionarProduto();
+        if (!ok) return;
+      }
     };
 
     const mostrarAviso = (mensagem) => {
@@ -196,38 +437,153 @@ function Vendas() {
       setTimeout(() => setMensagemAviso(null), 3000); // Esconde após 3s
     };
 
+    async function buscarClientePorCPF(cpf) {
+      try {
+        const response = await fetch(`http://localhost:3001/clientes/buscar-por-cpf/${cpf}`);
+        
+        if (!response.ok) {
+          if (response.status === 404) {
+            setClienteMsg(`Cliente não encontrado - ${cpf}`);
+          } else {
+            setClienteMsg("Erro ao buscar cliente");
+          }
+          return null;
+        }
 
-    function validarCPF(cpf) {
-        cpf = cpf.replace(/[^\d]+/g, ''); // Remove tudo que não for número
+        const cliente = await response.json();
+        setNomeCliente(clienteMsg); // se tiver estado de nome
+        setClienteMsg(`Cliente carregado - ${cpf}`);
+        return cliente;
 
-        if (cpf.length !== 11 || /^(\d)\1{10}$/.test(cpf)) return false;
+      } catch (error) {
+        console.error('Erro ao buscar cliente:', error);
+        setClienteMsg("Erro de conexão");
+        return null;
+      }
+    }
 
-        let soma = 0, resto;
+    async function validarCPF(cpf) {
+      cpf = cpf.replace(/[^\d]+/g, '');
 
-        for (let i = 1; i <= 9; i++) soma += parseInt(cpf.substring(i - 1, i)) * (11 - i);
-        resto = (soma * 10) % 11;
-        if ((resto === 10) || (resto === 11)) resto = 0;
-        if (resto !== parseInt(cpf.substring(9, 10))) return false;
+      if (cpf.length !== 11 || /^(\d)\1{10}$/.test(cpf)) {
+        setClienteMsg("CPF inválido");
+        return false;
+      }
 
-        soma = 0;
-        for (let i = 1; i <= 10; i++) soma += parseInt(cpf.substring(i - 1, i)) * (12 - i);
-        resto = (soma * 10) % 11;
-        if ((resto === 10) || (resto === 11)) resto = 0;
+      let soma = 0, resto;
 
-        return resto === parseInt(cpf.substring(10, 11));
-}
+      for (let i = 1; i <= 9; i++) soma += parseInt(cpf.substring(i - 1, i)) * (11 - i);
+      resto = (soma * 10) % 11;
+      if (resto === 10 || resto === 11) resto = 0;
+      if (resto !== parseInt(cpf.substring(9, 10))) {
+        setClienteMsg("CPF inválido");
+        return false;
+      }
 
+      soma = 0;
+      for (let i = 1; i <= 10; i++) soma += parseInt(cpf.substring(i - 1, i)) * (12 - i);
+      resto = (soma * 10) % 11;
+      if (resto === 10 || resto === 11) resto = 0;
 
-      
+      const valido = resto === parseInt(cpf.substring(10, 11));
+
+      if (!valido) {
+        setClienteMsg("CPF inválido");
+        return false;
+      }
+
+      // Se CPF válido, faz busca no banco
+      await buscarClientePorCPF(cpf);
+      return true;
+    }
+
+    const finalizarVenda = async () => {
+      try {
+        const dadosVenda = {
+          cliente_id: clienteId || null, // você pode usar null se for consumidor final
+          total: total,
+          metodo_pagamento: metodoPagamentoSelecionado, // ex: "pix", "cartao", etc.
+          criado_por: usuarioId, // ID do usuário logado
+          produtos: produtos.map((p) => ({
+            produto_id: p.id, // certifique-se de que `p.id` exista
+            quantidade: p.quantidade,
+            preco: p.preco,
+          })),
+        };
+
+        const response = await fetch("http://localhost:3001/vendas", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(dadosVenda),
+        });
+
+        if (!response.ok) {
+          throw new Error("Erro ao registrar venda no banco de dados.");
+        };
+
+        const result = await response.json();
+        console.log("Venda registrada com sucesso:", result);
+
+        // Resetar dados da venda
+        setProdutos([]);
+        setCodigo("");
+        setTroco(null);
+        setVerificandoMaquina(false);
+        setModoParcelamento(false);
+        setEtapaCartao("");
+        setEsperandoValorRecebido(false);
+        setModoCPF(false);
+        setModoCreditoDebito(false);
+        setValorRestante(0);
+        setFasePagamento(false);
+        setCpfSolicitado(false);
+        setModoQuantidade(false);
+        setMensagemAviso("Venda finalizada com sucesso!");
+        setModalPixAberto(false);
+        // Redirecionar ou mostrar modal, se necessário
+      } catch (error) {
+        console.error("Erro ao finalizar venda:", error);
+        setMensagemAviso("Erro ao registrar venda. Tente novamente.");
+      }
+    }
+
   return (
     <div className="cont-principal">
       <div className="cont-controler">
         <div ref={listItensControllRef} className={`list-itens-controll ${produtos.length === 0 ? 'visibilidade' : ''}`}>
           {produtos.map((p, i) => (
             <div key={i} className="item-control">
-              {p.nome} - Qtd: {p.quantidade} - R$ {p.preco.toFixed(2)}
+              <button 
+                className="buttonEdits"
+                onClick={() =>{
+                setModoQuantidade(true);
+                setIndiceEdicao(i);
+                setCodigo("");
+              }}> <img src="./icon_edit.svg" alt="edtitar"></img></button>
+
+              {p.nome} - Qtd: {p.quantidade} - R$ Preço: R$ {typeof p.preco === 'number' ? p.preco.toFixed(2) : '0.00'}
+
+              <button className="buttonEdits" onClick={() => excluirProduto(i)}><img src="./icon_trash.svg" alt="excliur"/></button>
             </div>
+            
           ))}
+          {modalPixAberto && (
+            <div className="modal-overlay">
+              <div className="modal-pix">
+                <h3>Escaneie o QR Code para pagar</h3>
+                <img src="/qr-code-exemplo.png" alt="QR Code Pix" />
+                <button onClick={() => {
+                  setModalPixAberto(false);
+                  finalizarVenda();
+                }}>
+                  Pagamento Confirmado
+                </button>
+              </div>
+            </div>
+          )}
+
         </div>
         <button onClick={cancelarVenda} className={`cancelar ${produtos.length === 0 ? 'visibilidade' : ''}`}>Cancelar</button>
         
@@ -235,56 +591,80 @@ function Vendas() {
       <div className="driver-line"></div>
       <div className="view-nota">
         <div className="infos-client">
-          <h4>{clienteMsg}</h4>
+          <h4 className={produtos.length === 0 ? 'visibilidade' : ''}>{clienteMsg}</h4>
         </div>
         <div ref={listItensRef} className={`list-itens ${produtos.length === 0 ? 'visibilidade' : ''}`}>
           {produtos.map((p, i) => (
             <div key={i} className="item-nota">
-              {i + 1}. {p.nome} - Qtd: {p.quantidade} - Unit: R$ {p.preco.toFixed(2)} - Subtotal: R$ {p.subtotal.toFixed(2)}
+              {i + 1}. {p.nome} - Qtd: {p.quantidade} - Unit: R$ {typeof p.preco === 'number' ? p.preco.toFixed(2) : '0.00'} - Subtotal: R$ {typeof p.subtotal === 'number' ? p.subtotal.toFixed(2) : '0.00'}
             </div>
           ))}
         </div>
         <div className="print-view">
-          <h3>Total: R$ {total.toFixed(2)}</h3>
+          <h3 className={produtos.length === 0 ? 'visibilidade' : ''}>Total: R$ {total.toFixed(2)}</h3>
           <p>
-  {troco !== null
-    ? `Troco: R$ ${troco.toFixed(2)}`
-    : esperandoValorRecebido
-    ? "Insira o valor recebido:"
-    : modoCPF
-    ? "Digite o CPF:"
-    : valorRestante > 0
-    ? `Valor restante: R$ ${valorRestante.toFixed(2)} | Escolha nova forma de pagamento: 2-Cartão | 3-Pix | 4-Crédito em haver`
-    : fasePagamento
-    ? "Forma de pagamento: 1-Dinheiro | 2-Cartão | 3-Pix | 4-Crédito em haver"
-    : formaPagamento
-    ? `Pagamento com ${formaPagamento}`
-    : cpfSolicitado
-    ? "Deseja incluir CPF?"
-    : "Use o scanner ou digite o código do produto:"}
-</p>
-
+            {troco !== null
+              ? `Troco: R$ ${troco.toFixed(2)}`
+              : verificandoMaquina
+              ? "Verificando conexão com a máquina..."
+              : modoParcelamento
+              ? "Escolha entre as parcelas: 1 - Avista | 2 a 10 - Parcelado"
+              : etapaCartao === "debito"
+              ? "Verificando conexão com a máquina..."
+              : etapaCartao === "credito"
+              ? "Escolha entre as parcelas: 1 - Avista | 2 a 10 - Parcelado"
+              : esperandoValorRecebido
+              ? "Insira o valor recebido:"
+              : modoCPF
+              ? "Digite o CPF:"
+              : modoCreditoDebito
+              ? "Escolha: 1 - Débito | 2 - Crédito"
+              : valorRestante > 0
+              ? `Valor restante: R$ ${valorRestante.toFixed(2)} | Escolha nova forma de pagamento: 2-Cartão | 3-Pix`
+              : fasePagamento
+              ? "Forma de pagamento: 1-Dinheiro | 2-Cartão | 3-Pix"
+              : cpfSolicitado
+              ? "Deseja incluir CPF?"
+              : modoQuantidade
+              ? "Digite a quantidade desejada:"
+              : "Use o scanner ou digite o código do produto:"}
+          </p>
         </div>
         <input
           className="scann"
           type="text"
           placeholder={
-            modoCPF
-              ? "Digite o CPF..."
-              : cpfSolicitado
-              ? "sim ou não..."
-              : "Digite ou leia o código de barras..."
-          }
+  modoQuantidade
+    ? "Digite a quantidade..."
+    : modoCPF
+    ? "Digite o CPF..."
+    : modoParcelamento
+    ? "Escolha a forma de parcelamento..."
+    : modoCreditoDebito
+    ? "Escolha a forma de pagamento..."
+    : fasePagamento
+    ? "Escolha a forma de pagamento..."
+    : cpfSolicitado
+    ? "sim ou não..."
+    : esperandoValorRecebido
+    ? "Digite o valor recebido..."
+    : "Digite ou leia o código de barras..."
+}
+          autoFocus
           value={codigo}
           onChange={(e) => {
-    const val = e.target.value;
-    if (esperandoValorRecebido) {
-      if (/^[0-9.,]*$/.test(val)) setCodigo(val);
-    } else {
-      setCodigo(val);
-    }
-  }}
+            const val = e.target.value;
+            if (esperandoValorRecebido) {
+              if (/^[0-9.,]*$/.test(val)) setCodigo(val);
+            } else {
+              setCodigo(val);
+            }
+          }}
           onKeyDown={handleKeyDown}
+        autoComplete="off"
+  spellCheck={false}
+  autoCorrect="off"
+  autoCapitalize="off"
         />
 
       </div>

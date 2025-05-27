@@ -8,9 +8,13 @@ app.use(express.json());
 // Importar rotas separadas
 const loginRoutes = require('./routes/login');
 const trocarSenha = require('./routes/trocarSenha'); 
+const produtosRoutes = require('./routes/produtos');
+const clientes = require('./routes/clientes');
 
 // Usar as rotas
 app.use('/login', loginRoutes);
 app.use('/trocar-senha', trocarSenha);
+app.use('/produtos', produtosRoutes);
+app.use("/api/clientes", clientes);
 
 module.exports = app;

@@ -1,5 +1,6 @@
 const app = require('./App'); 
-const port = 3001;
+const port = process.env.PORT || 3001;
+
 
 // Outras rotas, como /produtos, etc.
 app.listen(port, () => {

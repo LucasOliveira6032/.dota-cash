@@ -1,9 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Login.css';
+import { useAuth } from '../../contexts/AuthContext'; // certifique-se de importar isso
+
+
+
 
 
 function Login() {
+  const { login } = useAuth(); // use isso dentro do componente Login
   const [usuario, setUsuario] = useState('');
   const [senha, setSenha] = useState('');
   const [mensagem, setMensagem] = useState('');
@@ -20,13 +25,20 @@ function Login() {
       });
 
       const dados = await resposta.json();
-      console.log('Resposta do backend:', dados);
+      console.log('O Backend está respondendo a aquisição de Login');
 
       if (resposta.ok) {
-        localStorage.setItem('usuarioId', dados.usuarioId);
-        localStorage.setItem('senhaPadrao', dados.trocaSenhaObrigatoria); // salva flag
-
-        navigate('/Inicio');
+        if (dados.trocaSenhaObrigatoria) {
+          // senha temporária: salva só o ID, e força troca no LayoutSistema
+          localStorage.setItem('usuarioId', dados.usuarioId);
+          localStorage.setItem('senhaPadrao', true);
+          navigate('/Inicio');
+        } else {
+          // login completo com token
+          login(dados.usuarioId, dados.token);
+          localStorage.setItem('senhaPadrao', false);
+          navigate('/Inicio');
+        }
       } else {
         setMensagem(dados.mensagem || 'Usuário ou senha inválidos.');
       }

@@ -1,0 +1,43 @@
+# Ignorar dependências
+node_modules/
+
+# Arquivos de ambiente
+.env
+.env.local
+.env.*.local
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Diretórios temporários e de cache
+dist/
+build/
+.cache/
+.tmp/
+temp/
+
+# Arquivos do sistema
+.DS_Store
+Thumbs.db
+
+# Ignorar arquivos de testes e cobertura
+coverage/
+*.lcov
+
+# Banco de dados SQLite (caso use localmente)
+*.sqlite
+*.sqlite3
+
+# Arquivos do PM2 (caso use deploy)
+pids
+*.pid
+*.seed
+
+# Ignore arquivos específicos de IDEs
+.vscode/
+.idea/
+*.swp

@@ -2,10 +2,12 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const pool = require('../db');
+require('dotenv').config();
 
 const router = express.Router();
 
 router.post('/', async (req, res) => {
+  
   const { usuario, senha } = req.body;
 
   try {
@@ -29,11 +31,13 @@ router.post('/', async (req, res) => {
       return res.status(401).json({ mensagem: 'Senha incorreta' });
     }
 
-    const token = jwt.sign({ id: user.id, usuario: user.usuario }, 'seu-segredo-aqui', {
-      expiresIn: '1h',
-    });
+    const token = jwt.sign(
+      { id: user.id, usuario: user.usuario },
+      process.env.JWT_SECRET, // <- usando a variável de ambiente
+      { expiresIn: '1h' }
+    );
 
-    return res.json({ mensagem: 'Login bem-sucedido', token });
+    return res.json({mensagem: 'Login bem-sucedido',token,usuarioId: user.id,});
 
   } catch (error) {
     console.error('Erro no backend:', error);
