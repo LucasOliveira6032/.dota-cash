@@ -31,7 +31,12 @@ function Vendas() {
     const [modoCreditoDebito, setModoCreditoDebito] = useState(false);
     const [modoParcelamento, setModoParcelamento] = useState(false);
     const [etapaCartao, setEtapaCartao] = useState(""); // '', 'debito', 'credito'
+    const [clienteId, setClienteId] = useState(null);
+    const [metodoPagamentoSelecionado, setMetodoPagamentoSelecionado] = useState(null);
+    const usuarioId = localStorage.getItem("usuarioId");
 
+
+    const [aguardandoImpressao, setAguardandoImpressao] = useState(false);
 
     //variaveis lógica de cancelamento
 
@@ -73,72 +78,72 @@ function Vendas() {
 
       // (Opcional) Mostra mensagem de confirmação:
       setMensagemAviso("Venda cancelada com sucesso.");
+        setTimeout(() => {
+    setMensagemAviso("");
+  }, 3000);
     };
 
-const adicionarProduto = async () => {
-  try {
-    const codigoLimpo = (codigo || '').trim();
+    const adicionarProduto = async () => {
+      try {
+        const codigoLimpo = (codigo || '').trim();
 
-    if (!codigoLimpo) {
-      mostrarAviso("Digite um código válido!");
-      return;
-    }
+        if (!codigoLimpo) {
+          mostrarAviso("Digite um código válido!");
+          return;
+        }
 
-    console.log("codigo digitado:", JSON.stringify(codigoLimpo));
+        console.log("codigo digitado:", JSON.stringify(codigoLimpo));
 
-    const response = await fetch(`http://localhost:3001/produtos/${codigoLimpo}`);
+        const response = await fetch(`http://localhost:3001/produtos/${codigoLimpo}`);
 
-    if (!response.ok) {
-      mostrarAviso("Produto não encontrado.");
-      return;
-    }
+        if (!response.ok) {
+          mostrarAviso("Produto não encontrado.");
+          return;
+        }
 
-    const produto = await response.json();
-    const precoFormatado = produto.preco != null ? parseFloat(produto.preco) : 0;
+        const produto = await response.json();
+        const precoFormatado = produto.preco != null ? parseFloat(produto.preco) : 0;
 
-    setProdutos((prevProdutos) => {
-      const produtosAtualizados = [...prevProdutos];
-      const produtoExistenteIndex = produtosAtualizados.findIndex(p => p.id === produto.id);
+        setProdutos((prevProdutos) => {
+          const produtosAtualizados = [...prevProdutos];
+          const produtoExistenteIndex = produtosAtualizados.findIndex(p => p.id === produto.id);
 
-      if (produtoExistenteIndex !== -1) {
-        // Produto já existe, atualiza quantidade e subtotal
-        const produtoExistente = produtosAtualizados[produtoExistenteIndex];
-        const novaQuantidade = produtoExistente.quantidade + 1;
-        produtosAtualizados[produtoExistenteIndex] = {
-          ...produtoExistente,
-          quantidade: novaQuantidade,
-          subtotal: precoFormatado * novaQuantidade,
-        };
-      } else {
-        // Produto não existe ainda, adiciona novo
-        const novoProduto = {
-          id: produto.id,
-          codigo: produto.codigo_barras,
-          nome: produto.nome,
-          preco: precoFormatado,
-          quantidade: 1,
-          subtotal: precoFormatado,
-        };
-        produtosAtualizados.push(novoProduto);
+          if (produtoExistenteIndex !== -1) {
+            // Produto já existe, atualiza quantidade e subtotal
+            const produtoExistente = produtosAtualizados[produtoExistenteIndex];
+            const novaQuantidade = produtoExistente.quantidade + 1;
+            produtosAtualizados[produtoExistenteIndex] = {
+              ...produtoExistente,
+              quantidade: novaQuantidade,
+              subtotal: precoFormatado * novaQuantidade,
+            };
+          } else {
+            // Produto não existe ainda, adiciona novo
+            const novoProduto = {
+              id: produto.id,
+              codigo: produto.codigo_barras,
+              nome: produto.nome,
+              preco: precoFormatado,
+              quantidade: 1,
+              subtotal: precoFormatado,
+            };
+            produtosAtualizados.push(novoProduto);
+          }
+
+          // Atualiza o total a partir dos subtotais atuais
+          const novoTotal = produtosAtualizados.reduce((acc, p) => acc + p.subtotal, 0);
+          setTotal(novoTotal);
+
+          return produtosAtualizados;
+        });
+
+        setCodigo(""); // Limpa o campo após adicionar
+        console.log("Produto retornado da API:", produto);
+      } catch (error) {
+        console.error("Erro ao adicionar produto:", error);
+        mostrarAviso("Erro ao buscar produto.");
       }
-
-      // Atualiza o total a partir dos subtotais atuais
-      const novoTotal = produtosAtualizados.reduce((acc, p) => acc + p.subtotal, 0);
-      setTotal(novoTotal);
-
-      return produtosAtualizados;
-    });
-
-    setCodigo(""); // Limpa o campo após adicionar
-    console.log("Produto retornado da API:", produto);
-  } catch (error) {
-    console.error("Erro ao adicionar produto:", error);
-    mostrarAviso("Erro ao buscar produto.");
-  }
-};
-
-
-
+    };
 
     const editarProduto = (index, novaQuantidade) => {
       setProdutos((prevProdutos) => {
@@ -182,6 +187,18 @@ const adicionarProduto = async () => {
       }
     }, [produtos]);
 
+    useEffect(() => {
+  if (aguardandoImpressao) {
+    const timer = setTimeout(() => {
+      console.log("Finalizando venda após espera para impressão...");
+      finalizarVenda(); // sua função atual
+      setAguardandoImpressao(false); // reseta o estado
+    }, 3000); // aguarda 3 segundos
+
+    return () => clearTimeout(timer); // limpa timeout se componente for desmontado
+  }
+}, [aguardandoImpressao]);
+
 
     const handleKeyDown = (e) => {
       if (e.key === "Enter") {
@@ -224,8 +241,7 @@ const adicionarProduto = async () => {
             return;
           }
                   
-          console.log("CPF digitado:", codigo);
-          setClienteMsg(`Cliente não encontrado - ${codigo}`);  
+          console.log("CPF digitado:", codigo); 
           setCodigo("");
           setModoCPF(false);
           setCpfSolicitado(false);
@@ -301,6 +317,7 @@ const adicionarProduto = async () => {
             setFasePagamento(false);
             setCodigo("");
             setEtapaCartao("debito");
+            setMetodoPagamentoSelecionado("Debito");
             finalizarVenda();
             
             
@@ -309,6 +326,8 @@ const adicionarProduto = async () => {
             setModoParcelamento(true);
             setCodigo("");
             setEtapaCartao("credito");
+            setMetodoPagamentoSelecionado("Crédito");
+
             
           }
           return;
@@ -337,6 +356,7 @@ const adicionarProduto = async () => {
           if (forma === "Dinheiro") {
             if (!esperandoValorRecebido) {
               setEsperandoValorRecebido(true);
+              setMetodoPagamentoSelecionado("Dinheiro");
               setCodigo("");
               return;
             }
@@ -354,27 +374,31 @@ const adicionarProduto = async () => {
             const pagamentoFinalArred = Number(total.toFixed(2));
             const trocoCalculado = Number((novoValorPago - pagamentoFinalArred).toFixed(2));
 
+            console.log("Forma:", forma);
+            console.log("Recebido:", recebido);
+            console.log("Total:", total);
+            console.log("Novo valor pago:", novoValorPago);
+            console.log("Comparação:", novoValorPago >= pagamentoFinalArred);
+
             if (novoValorPago >= pagamentoFinalArred) {
               setTroco(trocoCalculado > 0 ? trocoCalculado : null);
               setValorPagoTotal(0);
               setValorRestante(0);
               setEsperandoValorRecebido(false);
               setCodigo("");
-              setMensagemAviso("Venda finalizada com sucesso!");
-
-              setTimeout(() => finalizarVenda(), 3000);
+              console.log("Preparando para finalizar venda...");
+              setAguardandoImpressao(true)// 3 segundos
             } else {
               const valorRestanteArred = Number((pagamentoFinalArred - novoValorPago).toFixed(2));
               setValorPagoTotal(novoValorPago);
               setValorRestante(valorRestanteArred);
               setMensagemAviso(`Faltam R$ ${valorRestanteArred.toFixed(2)}`);
               setCodigo("");
-              finalizarVenda();
             }
 
           } else if (forma === "Pix") {
             setModalPixAberto(true);
-
+            setMetodoPagamentoSelecionado("pix"); // ou "cartao", etc
           } else {
             const novoValorPago = Number((valorPagoTotal + total).toFixed(2));
             const totalArred = Number(total.toFixed(2));
@@ -451,8 +475,9 @@ const adicionarProduto = async () => {
         }
 
         const cliente = await response.json();
-        setNomeCliente(clienteMsg); // se tiver estado de nome
-        setClienteMsg(`Cliente carregado - ${cpf}`);
+        setClienteId(cliente.id);       // guarda o id do cliente no estado
+        setNomeCliente(cliente.nome);  // mostra o nome, se quiser
+        setClienteMsg(`${cliente.nome} - ${cpf}`);
         return cliente;
 
       } catch (error) {
@@ -487,14 +512,16 @@ const adicionarProduto = async () => {
 
       const valido = resto === parseInt(cpf.substring(10, 11));
 
+          await buscarClientePorCPF(cpf);
+
       if (!valido) {
         setClienteMsg("CPF inválido");
         return false;
       }
 
       // Se CPF válido, faz busca no banco
-      await buscarClientePorCPF(cpf);
-      return true;
+  
+      return;
     }
 
     const finalizarVenda = async () => {
@@ -542,6 +569,9 @@ const adicionarProduto = async () => {
         setModoQuantidade(false);
         setMensagemAviso("Venda finalizada com sucesso!");
         setModalPixAberto(false);
+          setTimeout(() => {
+    setMensagemAviso("");
+  }, 3000);
         // Redirecionar ou mostrar modal, se necessário
       } catch (error) {
         console.error("Erro ao finalizar venda:", error);

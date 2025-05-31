@@ -3,7 +3,7 @@ const express = require("express");
 const router = express.Router();
 const pool = require("../db"); // Seu pool de conexão com mysql2
 
-router.post("/vendas", async (req, res) => {
+router.post("/", async (req, res) => {
   const { cliente_id, total, metodo_pagamento, criado_por, produtos } = req.body;
 
   const conn = await pool.getConnection();

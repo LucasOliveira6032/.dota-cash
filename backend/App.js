@@ -10,11 +10,13 @@ const loginRoutes = require('./routes/login');
 const trocarSenha = require('./routes/trocarSenha'); 
 const produtosRoutes = require('./routes/produtos');
 const clientes = require('./routes/clientes');
+const vendas = require('./routes/vendas')
 
 // Usar as rotas
 app.use('/login', loginRoutes);
 app.use('/trocar-senha', trocarSenha);
 app.use('/produtos', produtosRoutes);
-app.use("/api/clientes", clientes);
+app.use("/clientes", clientes);
+app.use('/vendas', vendas);
 
 module.exports = app;

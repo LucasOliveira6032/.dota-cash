@@ -1,13 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import Modal from 'react-modal';
+import { FaUser } from 'react-icons/fa';
 import './principal.css';
 import Sidebar from '../SideBar/sideBar';
 import { Outlet } from 'react-router-dom';
-
-
-
-
-
 
 
 Modal.setAppElement('#root'); 
@@ -17,6 +13,12 @@ function LayoutSistema() {
   const [novaSenha, setNovaSenha] = useState('');
   const usuarioId = localStorage.getItem('usuarioId');  
 
+    const [menuAberto, setMenuAberto] = useState(false);
+
+  const handleLogout = () => {
+    localStorage.clear(); // Remove token, id, senhaPadrao etc.
+    window.location.href = '/'; // Redireciona para tela de login
+  };
 
 
   useEffect(() => {
@@ -81,6 +83,17 @@ function LayoutSistema() {
       
       <section className='viewTelas'>
           <img src='./logo.svg' className='logo'></img>
+          <div className="usuario-menu">
+            <img src="./icons/icon_profile.svg" alt='logo_user'
+              className="icone-usuario"
+              onClick={() => setMenuAberto(!menuAberto)}
+            />
+            {menuAberto && (
+              <div className="menu-dropdown">
+                <button onClick={handleLogout}>Sair</button>
+              </div>
+            )}
+          </div>
           <Outlet/> 
       </section>
     </div>

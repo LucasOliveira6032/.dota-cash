@@ -40,14 +40,37 @@ router.get('/:codigo_barras', async (req, res) => {
 
 // Incluir novo produto
 router.post('/', async (req, res) => {
-  const { nome, descricao, preco, estoque, categoria_id, codigo_barras, imagem, criado_por } = req.body;
+  const {
+    nome,
+    descricao,
+    preco_custo,
+    preco_venda,
+    estoque,
+    categoria_id,
+    codigo_barras,
+    imagem,
+    criado_por
+  } = req.body;
+
   try {
-    const criado_em = new Date();
     const [result] = await pool.execute(
-      `INSERT INTO produtos (nome, descricao, preco, estoque, categoria_id, codigo_barras, imagem, criado_por, criado_em)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [nome, descricao, preco, estoque, categoria_id, codigo_barras, imagem, criado_por, criado_em]
+      `INSERT INTO produtos (
+        nome, descricao, preco_custo, preco_venda, estoque,
+        categoria_id, codigo_barras, imagem, criado_por
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        nome ?? null,
+        descricao ?? null,
+        preco_custo ?? null,
+        preco_venda ?? null,
+        estoque ?? null,
+        categoria_id ?? null,
+        codigo_barras ?? null,
+        imagem ?? null,
+        criado_por ?? null
+      ]
     );
+
     res.status(201).json({ mensagem: 'Produto incluído com sucesso', id: result.insertId });
   } catch (error) {
     console.error('Erro ao incluir produto:', error);
@@ -55,7 +78,23 @@ router.post('/', async (req, res) => {
   }
 });
 
+
 // Excluir produto por ID
+router.delete('/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const [result] = await pool.execute('DELETE FROM produtos WHERE id = ?', [id]);
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ mensagem: 'Produto não encontrado' });
+    }
+    res.json({ mensagem: 'Produto excluído com sucesso' });
+  } catch (error) {
+    console.error('Erro ao excluir produto:', error);
+    res.status(500).json({ mensagem: 'Erro ao excluir produto' });
+  }
+});
+
+// Excluir produto
 router.delete('/:id', async (req, res) => {
   const { id } = req.params;
   try {
