@@ -3,40 +3,106 @@ const express = require("express");
 const router = express.Router();
 const pool = require("../db"); // Seu pool de conexão com mysql2
 
-router.post("/", async (req, res) => {
-  const { cliente_id, total, metodo_pagamento, criado_por, produtos } = req.body;
 
-  const conn = await pool.getConnection();
+router.post("/iniciar", async (req, res) => {
   try {
-    await conn.beginTransaction();
-
-    // 1. Inserir a venda
-    const [vendaResult] = await conn.execute(
-      `INSERT INTO vendas (cliente_id, total, metodo_pagamento, criado_por, criado_em)
-       VALUES (?, ?, ?, ?, NOW())`,
-      [cliente_id || null, total, metodo_pagamento, criado_por]
+    const [result] = await pool.execute(
+      "INSERT INTO vendas (total) VALUES (0)"
     );
 
-    const vendaId = vendaResult.insertId;
+    const vendaId = result.insertId;
+    res.json({ vendaId });
+  } catch (error) {
+    console.error("Erro ao iniciar venda:", error);
+    res.status(500).json({ erro: "Erro ao iniciar venda." });
+  }
+});
 
-    // 2. Inserir os itens da venda
+// POST /vendas/finalizar
+router.post("/finalizar", async (req, res) => {
+  const {
+    venda_id,
+    cliente_id,
+    total,
+    metodo_pagamento,
+    criado_por,
+    produtos,
+  } = req.body;
+
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    // 1. Atualiza a venda com os dados finais
+    await connection.execute(
+      `UPDATE vendas SET cliente_id = ?, total = ?, metodo_pagamento = ?, criado_por = ? WHERE id = ?`,
+      [cliente_id, total, metodo_pagamento, criado_por, venda_id]
+    );
+
+    // 2. Insere os produtos da venda na tabela itens_vendas
     for (const item of produtos) {
-      await conn.execute(
-        `INSERT INTO itens_venda (venda_id, produto_id, quantidade, preco_unitario)
-         VALUES (?, ?, ?, ?)`,
-        [vendaId, item.produto_id, item.quantidade, item.preco]
+        console.log("Item recebido para inserção:", item);
+      await connection.execute(
+        `INSERT INTO itens_venda (venda_id, produto_id, quantidade, preco_unitario) VALUES (?, ?, ?, ?)`,
+        [venda_id, item.produto_id, item.quantidade, item.preco_unitario]
+      );
+
+      // 3. Atualiza o estoque do produto
+      await connection.execute(
+        `UPDATE produtos SET estoque = estoque - ? WHERE id = ?`,
+        [item.quantidade, item.produto_id]
       );
     }
 
-    await conn.commit();
-    res.status(201).json({ message: "Venda registrada com sucesso!", venda_id: vendaId });
+    await connection.commit();
+    res.json({ sucesso: true });
   } catch (error) {
-    await conn.rollback();
-    console.error("Erro ao registrar venda:", error);
-    res.status(500).json({ error: "Erro ao registrar venda." });
+    await connection.rollback();
+    console.error("Erro ao finalizar venda:", error);
+    res.status(500).json({ erro: "Erro ao finalizar venda" });
   } finally {
-    conn.release();
+    connection.release();
   }
 });
+
+
+
+router.post("/", async (req, res) => {
+  const { cliente_id, total, metodo_pagamento, criado_por, produtos } = req.body;
+
+  try {
+    const connection = await pool.getConnection();
+
+    // 1. Primeiro, insere a VENDA
+    const [vendaResult] = await connection.execute(
+      "INSERT INTO vendas (cliente_id, total, metodo_pagamento, criado_por) VALUES (?, ?, ?, ?)",
+      [cliente_id, total, metodo_pagamento, criado_por]
+    );
+
+    const vendaId = vendaResult.insertId;
+    console.log("Venda registrada com ID:", vendaId);
+
+    // 2. Agora, insere os ITENS da venda
+    for (const produto of produtos) {
+      await connection.execute(
+        "INSERT INTO itens_venda (venda_id, produto_id, quantidade, preco_unitario) VALUES (?, ?, ?, ?)",
+        [
+          vendaId,
+          produto.produto_id,
+          produto.quantidade,
+          produto.preco_unitario,
+        ]
+      );
+    }
+
+    connection.release();
+    res.status(201).json({ message: "Venda registrada com sucesso!" });
+  } catch (error) {
+    console.error("Erro ao registrar venda:", error);
+    res.status(500).json({ error: "Erro ao registrar venda no banco de dados." });
+  }
+});
+
+
 
 module.exports = router;

@@ -5,6 +5,9 @@ import axios from 'axios';
 function Estoque(){
   const [produtos, setProdutos] = useState([]);
   const [modalAberto, setModalAberto] = useState(false);
+  const [modoEdicao, setModoEdicao] = useState(false);
+  const [produtoEditadoId, setProdutoEditadoId] = useState(null);
+
 
   const carregarProdutos = async () => {
     try {
@@ -52,43 +55,68 @@ function Estoque(){
   }
 };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    try {
-      const response = await fetch('http://localhost:3001/produtos', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
+  try {
+    const url = modoEdicao
+      ? `http://localhost:3001/produtos/${produtoEditadoId}`
+      : 'http://localhost:3001/produtos';
+
+    const method = modoEdicao ? 'PUT' : 'POST';
+
+    const response = await fetch(url, {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(formData),
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      alert(modoEdicao ? 'Produto atualizado com sucesso!' : 'Produto incluído com sucesso!');
+      setFormData({
+        nome: '',
+        descricao: '',
+        preco_custo: '',
+        preco_venda: '',
+        estoque: '',
+        categoria_id: '',
+        codigo_barras: '',
+        imagem: '',
+        criado_por: '',
       });
-
-      const data = await response.json();
-      if (response.ok) {
-        alert('Produto incluído com sucesso! ID: ' + data.id);
-        setFormData({
-          nome: '',
-          descricao: '',
-          preco_custo: '',
-          preco_venda: '',
-          estoque: '',
-          categoria_id: '',
-          codigo_barras: '',
-          imagem: '',
-          criado_por: '',
-        });
-        setModalAberto(false);
-        carregarProdutos();
-      } else {
-        alert(data.mensagem || 'Erro ao incluir produto');
-      }
-    } catch (error) {
-      console.error('Erro ao enviar produto:', error);
-      alert('Erro na comunicação com o servidor');
+      setModalAberto(false);
+      setModoEdicao(false);
+      setProdutoEditadoId(null);
+      carregarProdutos();
+    } else {
+      alert(data.mensagem || 'Erro ao salvar produto');
     }
-  };
+  } catch (error) {
+    console.error('Erro ao salvar produto:', error);
+    alert('Erro na comunicação com o servidor');
+  }
+};
 
+  const abrirModalEdicao = (produto) => {
+  setModoEdicao(true);
+  setProdutoEditadoId(produto.id);
+  setFormData({
+    nome: produto.nome || '',
+    descricao: produto.descricao || '',
+    preco_custo: produto.preco_custo || '',
+    preco_venda: produto.preco_venda || '',
+    estoque: produto.estoque || '',
+    categoria_id: produto.categoria_id || '',
+    codigo_barras: produto.codigo_barras || '',
+    imagem: produto.imagem || '',
+    criado_por: produto.criado_por || '',
+  });
+  setModalAberto(true);
+};
 
   useEffect(() => {
     carregarProdutos();
@@ -110,7 +138,7 @@ function Estoque(){
               {modalAberto && (
                 <div className="modal-overlay">
                   <div className="modal-pix">
-                    <h3>Adicionar Novo Produto</h3>
+                    <h3>{modoEdicao ? 'Editar Produto' : 'Adicionar Novo Produto'}</h3>
                     <form onSubmit={handleSubmit} className="form-produto">
                       <input name="nome" placeholder="Nome" value={formData.nome} onChange={handleChange} required />
                       <input name="descricao" placeholder="Descrição" value={formData.descricao} onChange={handleChange} />
@@ -156,7 +184,7 @@ function Estoque(){
                   <td className="celula-entrada">
                     <span className="data">{produto.ultima_entrada ? new Date(produto.ultima_entrada).toLocaleDateString() : '---'}</span>
                     <div className="acoes">
-                      <button onClick={() => alert('Editar')} className="botao-acao">✏️</button>
+                      <button onClick={() => abrirModalEdicao(produto)} className="botao-acao">✏️</button>
                       <button onClick={() => excluirProduto(produto.id)} className="botao-acao">🗑️</button>
                     </div>
                   </td>

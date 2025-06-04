@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import Modal from 'react-modal';
-import { FaUser } from 'react-icons/fa';
 import './principal.css';
 import Sidebar from '../SideBar/sideBar';
 import { Outlet } from 'react-router-dom';
@@ -82,9 +81,9 @@ function LayoutSistema() {
       <Sidebar/>
       
       <section className='viewTelas'>
-          <img src='./logo.svg' className='logo'></img>
+          <img src='./logo.svg' className='logo' alt='logo-dotta'></img>
           <div className="usuario-menu">
-            <img src="./icons/icon_profile.svg" alt='logo_user'
+            <img src="./icon_profile.svg" alt='logo_user'
               className="icone-usuario"
               onClick={() => setMenuAberto(!menuAberto)}
             />

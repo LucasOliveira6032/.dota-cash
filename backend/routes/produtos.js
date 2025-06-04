@@ -15,27 +15,24 @@ router.get('/', async (req, res) => {
 });
 
 // Buscar produto por código de Barras
-router.get('/:codigo_barras', async (req, res) => {
-  const codigo = req.params.codigo_barras.toString();
-  console.log('Código recebido no backend:', codigo);
+router.get("/:codigo", async (req, res) => {
+  const { codigo } = req.params;
+
   try {
-    const [rows] = await pool.execute(
-      'SELECT * FROM produtos WHERE (codigo_barras) = ?',
-      [codigo] // ✅ usa o campo correto da tabela
+    const connection = await pool.getConnection();
+    const [rows] = await connection.execute(
+      "SELECT * FROM produtos WHERE codigo_barras = ?",
+      [codigo]
     );
 
-    if (rows.length === 0) {
-      return res.status(404).json({ mensagem: 'Produto não encontrado' });
-    }
-
-    res.json(rows[0]);
+    connection.release();
+    res.json(rows);
   } catch (error) {
-    console.error('Erro ao buscar produto:', error);
-    res.status(500).json({ mensagem: 'Erro ao buscar produto' });
+    console.error("Erro ao buscar produto:", error);
+    res.status(500).json({ error: "Erro ao buscar produto." });
   }
-
-  console.log('Linhas retornadas:', rows);
 });
+
 
 
 // Incluir novo produto
@@ -108,5 +105,49 @@ router.delete('/:id', async (req, res) => {
     res.status(500).json({ mensagem: 'Erro ao excluir produto' });
   }
 });
+
+// Editar produto
+router.put('/:id', async (req, res) => {
+  const { id } = req.params;
+  const {
+    nome,
+    descricao,
+    preco_custo,
+    preco_venda,
+    estoque,
+    categoria_id,
+    codigo_barras,
+    imagem,
+    criado_por,
+  } = req.body;
+
+  try {
+    // Atualiza o produto pelo id
+    const [resultado] = await pool.execute(
+      `UPDATE produtos SET 
+        nome = ?, descricao = ?, preco_custo = ?, preco_venda = ?,
+        estoque = ?, categoria_id = ?, codigo_barras = ?, imagem = ?, criado_por = ?
+      WHERE id = ?`,
+      [
+        nome, descricao, preco_custo, preco_venda,
+        estoque, categoria_id, codigo_barras, imagem, criado_por,
+        id
+      ]
+    );
+
+    if (resultado.affectedRows === 0) {
+      return res.status(404).json({ mensagem: 'Produto não encontrado' });
+    }
+
+    res.json({ mensagem: 'Produto atualizado com sucesso' });
+  } catch (erro) {
+    if (erro.code === 'ER_DUP_ENTRY') {
+      return res.status(400).json({ mensagem: 'Código de barras já existe para outro produto.' });
+    }
+    console.error(erro);
+    res.status(500).json({ mensagem: 'Erro no servidor' });
+  }
+});
+
 
 module.exports = router;

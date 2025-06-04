@@ -12,11 +12,10 @@ html, body {
   box-sizing: border-box;
 }
 
-
 .cont-principal{
     width: 100%;
     height: calc(99% - 8vh);
-    margin-top: 8vh;
+    margin-top: 4vh;
     display: flex;
     flex-direction: row;
     justify-content: center;

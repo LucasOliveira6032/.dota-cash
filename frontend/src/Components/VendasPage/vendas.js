@@ -5,47 +5,32 @@ function Vendas() {
     const [produtos, setProdutos] = useState([]);
     const [total, setTotal] = useState(0);
     const [codigo, setCodigo] = useState("");
-
     const [cpfSolicitado, setCpfSolicitado] = useState(false);
-
     const [modoCPF, setModoCPF] = useState(false);
     const [clienteMsg, setClienteMsg] = useState("Controle");
     const [fasePagamento, setFasePagamento] = useState(false);
     const [formaPagamento, setFormaPagamento] = useState("");
     const [esperandoValorRecebido, setEsperandoValorRecebido] = useState(false);
     const [troco, setTroco] = useState(null);
-
     const [valorPagoTotal, setValorPagoTotal] = useState(0);
     const [valorRestante, setValorRestante] = useState(0);
-
-    //variavel mensagem de aviso
     const [mensagemAviso, setMensagemAviso] = useState(null);
-
-    //variaveis lógica para ScrollDown - rolar itens para baixo
     const listItensRef = useRef(null);
     const listItensControllRef = useRef(null);
-
     const [modoQuantidade, setModoQuantidade] = useState(false);
     const [indiceEdicao, setIndiceEdicao] = useState(null);
-
     const [modoCreditoDebito, setModoCreditoDebito] = useState(false);
     const [modoParcelamento, setModoParcelamento] = useState(false);
     const [etapaCartao, setEtapaCartao] = useState(""); // '', 'debito', 'credito'
     const [clienteId, setClienteId] = useState(null);
     const [metodoPagamentoSelecionado, setMetodoPagamentoSelecionado] = useState(null);
     const usuarioId = localStorage.getItem("usuarioId");
-
-
     const [aguardandoImpressao, setAguardandoImpressao] = useState(false);
-
-    //variaveis lógica de cancelamento
-
     const [cpfCliente, setCpfCliente] = useState("");
     const [nomeCliente, setNomeCliente] = useState("");
-
     const [verificandoMaquina, setVerificandoMaquina] = useState(false);
-
     const [modalPixAberto, setModalPixAberto] = useState(false);
+    const [vendaId, setVendaId] = useState(null);
 
 
 
@@ -83,67 +68,86 @@ function Vendas() {
   }, 3000);
     };
 
-    const adicionarProduto = async () => {
-      try {
-        const codigoLimpo = (codigo || '').trim();
+const adicionarProduto = async () => {
+  if (!vendaId) {
+  try {
+    const res = await fetch("http://localhost:3001/vendas/iniciar", {
+      method: "POST",
+    });
 
-        if (!codigoLimpo) {
-          mostrarAviso("Digite um código válido!");
-          return;
-        }
+    const data = await res.json();
+    setVendaId(data.vendaId);
+    console.log("Venda iniciada com ID:", data.vendaId);
+  } catch (err) {
+    console.error("Erro ao iniciar venda:", err);
+    mostrarAviso("Erro ao iniciar venda.");
+    return;
+  }
+}
 
-        console.log("codigo digitado:", JSON.stringify(codigoLimpo));
+  try {
+    const codigoLimpo = (codigo || '').trim();
 
-        const response = await fetch(`http://localhost:3001/produtos/${codigoLimpo}`);
+    if (!codigoLimpo) {
+      mostrarAviso("Digite um código válido!");
+      return;
+    }
 
-        if (!response.ok) {
-          mostrarAviso("Produto não encontrado.");
-          return;
-        }
+    const response = await fetch(`http://localhost:3001/produtos/${codigoLimpo}`);
 
-        const produto = await response.json();
-        const precoFormatado = produto.preco != null ? parseFloat(produto.preco) : 0;
+    if (!response.ok) {
+      mostrarAviso("Produto não encontrado.");
+      return;
+    }
 
-        setProdutos((prevProdutos) => {
-          const produtosAtualizados = [...prevProdutos];
-          const produtoExistenteIndex = produtosAtualizados.findIndex(p => p.id === produto.id);
+    const resultado = await response.json();
+    const produto = resultado[0]; // <- Aqui está a chave
 
-          if (produtoExistenteIndex !== -1) {
-            // Produto já existe, atualiza quantidade e subtotal
-            const produtoExistente = produtosAtualizados[produtoExistenteIndex];
-            const novaQuantidade = produtoExistente.quantidade + 1;
-            produtosAtualizados[produtoExistenteIndex] = {
-              ...produtoExistente,
-              quantidade: novaQuantidade,
-              subtotal: precoFormatado * novaQuantidade,
-            };
-          } else {
-            // Produto não existe ainda, adiciona novo
-            const novoProduto = {
-              id: produto.id,
-              codigo: produto.codigo_barras,
-              nome: produto.nome,
-              preco: precoFormatado,
-              quantidade: 1,
-              subtotal: precoFormatado,
-            };
-            produtosAtualizados.push(novoProduto);
-          }
+    if (!produto) {
+      mostrarAviso("Produto não encontrado.");
+      return;
+    }
 
-          // Atualiza o total a partir dos subtotais atuais
-          const novoTotal = produtosAtualizados.reduce((acc, p) => acc + p.subtotal, 0);
-          setTotal(novoTotal);
+    const precoFormatado = parseFloat(produto.preco_venda || 0);
 
-          return produtosAtualizados;
-        });
+    setProdutos((prevProdutos) => {
+      const produtosAtualizados = [...prevProdutos];
+      const produtoExistenteIndex = produtosAtualizados.findIndex(p => p.id === produto.id);
 
-        setCodigo(""); // Limpa o campo após adicionar
-        console.log("Produto retornado da API:", produto);
-      } catch (error) {
-        console.error("Erro ao adicionar produto:", error);
-        mostrarAviso("Erro ao buscar produto.");
+      if (produtoExistenteIndex !== -1) {
+        const produtoExistente = produtosAtualizados[produtoExistenteIndex];
+        const novaQuantidade = produtoExistente.quantidade + 1;
+        produtosAtualizados[produtoExistenteIndex] = {
+          ...produtoExistente,
+          quantidade: novaQuantidade,
+          subtotal: precoFormatado * novaQuantidade,
+        };
+      } else {
+        const novoProduto = {
+          id: produto.id,
+          codigo: produto.codigo_barras,
+          nome: produto.nome,
+          preco: precoFormatado,
+          quantidade: 1,
+          subtotal: precoFormatado,
+        };
+        produtosAtualizados.push(novoProduto);
       }
-    };
+
+      const novoTotal = produtosAtualizados.reduce((acc, p) => acc + p.subtotal, 0);
+      setTotal(novoTotal);
+
+      return produtosAtualizados;
+    });
+
+    setCodigo("");
+    console.log("Produto retornado da API:", produto);
+  } catch (error) {
+    console.error("Erro ao adicionar produto:", error);
+    mostrarAviso("Erro ao buscar produto.");
+  }
+};
+
 
     const editarProduto = (index, novaQuantidade) => {
       setProdutos((prevProdutos) => {
@@ -200,261 +204,238 @@ function Vendas() {
 }, [aguardandoImpressao]);
 
 
-    const handleKeyDown = (e) => {
-      if (e.key === "Enter") {
-        if (verificandoMaquina) return; 
-        console.log("Enter pressionado - código:", codigo, "| estados:", {
-          modoQuantidade,
-          modoCPF,
-          fasePagamento,
-          esperandoValorRecebido,
-          modoParcelamento,
-          modoCreditoDebito,
-          cpfSolicitado,
-        });
-        if (modoQuantidade && e.key === "Enter") {
-          const qtd = parseInt(codigo);
-          if (!isNaN(qtd) && qtd > 0 && indiceEdicao !== null) {
-            editarProduto(indiceEdicao, qtd);
-            setModoQuantidade(false);
-            setIndiceEdicao(null);
-            setCodigo(""); // limpa o campo após edição
-          } else {
-            setMensagemAviso("Quantidade inválida");
-          }
-          return;
-        }
-        // Verificação de estado da venda
-        if (produtos.length === 0 && codigo === "") {
-          mostrarAviso("Nenhum produto adicionado. Escaneie um produto para iniciar.");
-          setCpfSolicitado(false);
-          setModoCPF(false);
-          setFasePagamento(false);
-          return;
-        }
+const handleKeyDown = (e) => {
+  if (e.key === "Enter") {
+    if (verificandoMaquina) return;
 
-        if (modoCPF) {
-          const cpfValido = validarCPF(codigo);
-          if (!cpfValido) {
-            mostrarAviso("CPF inválido. Verifique e tente novamente.");
-            setCodigo("");
-            return;
-          }
-                  
-          console.log("CPF digitado:", codigo); 
-          setCodigo("");
-          setModoCPF(false);
-          setCpfSolicitado(false);
-          setFasePagamento(true);
-          return;
-        }
-
-        if (esperandoValorRecebido) {
-          const valorRecebido = parseFloat(codigo.replace(",", "."));
-
-          if (!isNaN(valorRecebido)) {
-            const novoValorPago = valorPagoTotal + valorRecebido;
-            if (novoValorPago >= total) {
-              // Pagamento suficiente
-              const valorTroco = novoValorPago - total;
-              setTroco(valorTroco);
-              setEsperandoValorRecebido(false);
-              setValorPagoTotal(0);
-              setValorRestante(0);
-              setFormaPagamento(""); // Limpa forma de pagamento
-            } else {
-              // Pagamento parcial
-              const restante = total - novoValorPago;
-              setValorPagoTotal(novoValorPago);
-              setValorRestante(restante);
-              setEsperandoValorRecebido(false);  // Aguarda nova forma
-              setFasePagamento(true);            // Reativa escolha de forma
-            }
-          }
-
-          setCodigo("");
-          return;
-        }
-
-        if (modoParcelamento) {
-          const parcelas = parseInt(codigo.trim());
-          if (parcelas >= 1 && parcelas <= 10) {
-            setFormaPagamento((prev) => prev + (prev ? " + " : "") + `Cartão - Crédito (${parcelas}x)`);
-            
-            // Bloqueia entrada e exibe mensagem de verificação
-            setModoParcelamento(false);
-            setVerificandoMaquina(true);
-            setEtapaCartao("verificando");
-            setMensagemAviso("Venda finalizada com sucesso!");
-            setCodigo("");
-            
-            if (valorRestante > 0) {
-                const pagamentoFinal = valorRestante || total;
-                const novoValorPago = valorPagoTotal + pagamentoFinal;
-
-                if (novoValorPago >= total) {
-                  setTroco(novoValorPago - total);
-                  setValorPagoTotal(null);
-                  setValorRestante(null);
-                } else {
-                  setValorPagoTotal(novoValorPago);
-                  setValorRestante(total - novoValorPago);
-                  setFasePagamento(true);
-                }
-              }
-
-            finalizarVenda();
-          }
-          return;
-        }
-
-        if (modoCreditoDebito) {
-          const escolha = (codigo || '').trim();
-
-          if (escolha === "1") {
-            setFormaPagamento((prev) => prev + (prev ? " + " : "") + "Cartão - Débito");
-            setModoCreditoDebito(false);
-            setFasePagamento(false);
-            setCodigo("");
-            setEtapaCartao("debito");
-            setMetodoPagamentoSelecionado("Debito");
-            finalizarVenda();
-            
-            
-          } else if (escolha === "2") {
-            setModoCreditoDebito(false);
-            setModoParcelamento(true);
-            setCodigo("");
-            setEtapaCartao("credito");
-            setMetodoPagamentoSelecionado("Crédito");
-
-            
-          }
-          return;
-        }
-
-        if (fasePagamento) {
-          const valor = (codigo || '').trim();
-
-          if (valor === "2") {
-            setModoCreditoDebito(true);
-            setCodigo("");
-            return;
-          }
-
-          const forma = {
-            "1": "Dinheiro",
-            "3": "Pix",
-          }[valor];
-          
-          if (!forma) {
-            mostrarAviso("Selecione a forma de pagamento!");
-            setCodigo("");
-            return;
-          }
-
-          if (forma === "Dinheiro") {
-            if (!esperandoValorRecebido) {
-              setEsperandoValorRecebido(true);
-              setMetodoPagamentoSelecionado("Dinheiro");
-              setCodigo("");
-              return;
-            }
-
-            const valorTratado = codigo.replace(/[^\d.,]/g, "").trim().replace(",", ".");
-            const recebido = parseFloat(valorTratado);
-
-            if (isNaN(recebido) || recebido <= 0) {
-              mostrarAviso("Valor inválido. Digite um número maior que zero.");
-              setCodigo("");
-              return;
-            }
-
-            const novoValorPago = Number((valorPagoTotal + recebido).toFixed(2));
-            const pagamentoFinalArred = Number(total.toFixed(2));
-            const trocoCalculado = Number((novoValorPago - pagamentoFinalArred).toFixed(2));
-
-            console.log("Forma:", forma);
-            console.log("Recebido:", recebido);
-            console.log("Total:", total);
-            console.log("Novo valor pago:", novoValorPago);
-            console.log("Comparação:", novoValorPago >= pagamentoFinalArred);
-
-            if (novoValorPago >= pagamentoFinalArred) {
-              setTroco(trocoCalculado > 0 ? trocoCalculado : null);
-              setValorPagoTotal(0);
-              setValorRestante(0);
-              setEsperandoValorRecebido(false);
-              setCodigo("");
-              console.log("Preparando para finalizar venda...");
-              setAguardandoImpressao(true)// 3 segundos
-            } else {
-              const valorRestanteArred = Number((pagamentoFinalArred - novoValorPago).toFixed(2));
-              setValorPagoTotal(novoValorPago);
-              setValorRestante(valorRestanteArred);
-              setMensagemAviso(`Faltam R$ ${valorRestanteArred.toFixed(2)}`);
-              setCodigo("");
-            }
-
-          } else if (forma === "Pix") {
-            setModalPixAberto(true);
-            setMetodoPagamentoSelecionado("pix"); // ou "cartao", etc
-          } else {
-            const novoValorPago = Number((valorPagoTotal + total).toFixed(2));
-            const totalArred = Number(total.toFixed(2));
-            const trocoCalculado = Number((novoValorPago - totalArred).toFixed(2));
-
-            if (novoValorPago >= totalArred) {
-              setTroco(trocoCalculado > 0 ? trocoCalculado : null);
-              setValorPagoTotal(0);
-              setValorRestante(0);
-              setMensagemAviso("Venda finalizada com sucesso!");
-              setTimeout(() => finalizarVenda(), 3000);
-            } else {
-              const valorRestanteArred = Number((totalArred - novoValorPago).toFixed(2));
-              setValorPagoTotal(novoValorPago);
-              setValorRestante(valorRestanteArred);
-              setFasePagamento(true);
-            }
-          }
-
-
-          return;
-        }
-
-
-        if ((codigo || '').trim() === "") {
-          setCpfSolicitado(true);
-          return;
-        }
-
-        if (cpfSolicitado) {
-          const resposta = (codigo || '').trim().toLowerCase();
-
-          if (resposta === "s" || resposta === "sim") {
-            setModoCPF(true);
-            setCodigo("");
-            return;
-          }
-
-          if (resposta === "n" || resposta === "nao" || resposta === "não") {
-            setCpfSolicitado(false);
-            setFasePagamento(true);  // Vai direto para pagamento
-            setCodigo("");
-            return;
-          }
-
-          // Se a resposta não for válida, mostra aviso
-          mostrarAviso("Digite sim ou não");
-          setCodigo("");
-          return;
-        }
-
-        // Só cai aqui se nenhuma das condições acima for verdadeira
-        const ok = adicionarProduto();
-        if (!ok) return;
+    if (modoQuantidade) {
+      const qtd = parseInt(codigo);
+      if (!isNaN(qtd) && qtd > 0 && indiceEdicao !== null) {
+        editarProduto(indiceEdicao, qtd);
+        setModoQuantidade(false);
+        setIndiceEdicao(null);
+        setCodigo("");
+      } else {
+        setMensagemAviso("Quantidade inválida");
       }
-    };
+      return;
+    }
+
+    if (produtos.length === 0 && codigo === "") {
+      mostrarAviso("Nenhum produto adicionado. Escaneie um produto para iniciar.");
+      setCpfSolicitado(false);
+      setModoCPF(false);
+      setFasePagamento(false);
+      return;
+    }
+
+    if (modoCPF) {
+      const cpfValido = validarCPF(codigo);
+      if (!cpfValido) {
+        mostrarAviso("CPF inválido. Verifique e tente novamente.");
+        setCodigo("");
+        return;
+      }
+
+      setCodigo("");
+      setModoCPF(false);
+      setCpfSolicitado(false);
+      setFasePagamento(true);
+      return;
+    }
+
+    if (esperandoValorRecebido) {
+      const valorRecebido = parseFloat(codigo.replace(",", "."));
+
+      if (!isNaN(valorRecebido)) {
+        const novoValorPago = valorPagoTotal + valorRecebido;
+        if (novoValorPago >= total) {
+          const valorTroco = novoValorPago - total;
+          setTroco(valorTroco);
+          setEsperandoValorRecebido(false);
+          setValorPagoTotal(0);
+          setValorRestante(0);
+          setFormaPagamento("");
+        } else {
+          const restante = total - novoValorPago;
+          setValorPagoTotal(novoValorPago);
+          setValorRestante(restante);
+          setEsperandoValorRecebido(false);
+          setFasePagamento(true);
+        }
+      }
+
+      setCodigo("");
+      return;
+    }
+
+    if (modoParcelamento) {
+      const parcelas = parseInt(codigo.trim());
+      if (parcelas >= 1 && parcelas <= 10) {
+        setFormaPagamento((prev) => prev + (prev ? " + " : "") + `Cartão - Crédito (${parcelas}x)`);
+        setModoParcelamento(false);
+        setVerificandoMaquina();
+        setEtapaCartao("verificando");
+        setMensagemAviso("Venda finalizada com sucesso!");
+        setCodigo("");
+
+        if (valorRestante > 0) {
+          const pagamentoFinal = valorRestante || total;
+          const novoValorPago = valorPagoTotal + pagamentoFinal;
+
+          if (novoValorPago >= total) {
+            setTroco(novoValorPago - total);
+            setValorPagoTotal(null);
+            setValorRestante(null);
+          } else {
+            setValorPagoTotal(novoValorPago);
+            setValorRestante(total - novoValorPago);
+            setFasePagamento(true);
+          }
+        }
+
+        finalizarVenda("Crédito");
+      }
+      return;
+    }
+
+    if (modoCreditoDebito) {
+      const escolha = (codigo || "").trim();
+
+      if (escolha === "1") {
+        setFormaPagamento((prev) => prev + (prev ? " + " : "") + "Cartão - Débito");
+        setModoCreditoDebito(false);
+        setFasePagamento(false);
+        setCodigo("");
+        setMetodoPagamentoSelecionado("Debito");
+        finalizarVenda();
+
+      } else if (escolha === "2") {
+        setModoCreditoDebito(false);
+        setFasePagamento(false);
+        setModoParcelamento(true);
+        setCodigo("");
+        setMetodoPagamentoSelecionado("credito");
+      }
+      return;
+    }
+
+    if (fasePagamento) {
+      const valor = (codigo || "").trim();
+
+      if (valor === "2") {
+        setModoCreditoDebito(true);
+        setCodigo("");
+        return;
+      }
+
+      const forma = {
+        "1": "Dinheiro",
+        "3": "Pix",
+      }[valor];
+
+      if (!forma) {
+        mostrarAviso("Selecione a forma de pagamento!");
+        setCodigo("");
+        return;
+      }
+
+      if (forma === "Dinheiro") {
+        if (!esperandoValorRecebido) {
+          setEsperandoValorRecebido(true);
+          setCodigo("");
+          return;
+        }
+
+        const valorTratado = codigo.replace(/[^\d.,]/g, "").trim().replace(",", ".");
+        const recebido = parseFloat(valorTratado);
+
+        if (isNaN(recebido) || recebido <= 0) {
+          mostrarAviso("Valor inválido. Digite um número maior que zero.");
+          setCodigo("");
+          return;
+        }
+
+        const novoValorPago = Number((valorPagoTotal + recebido).toFixed(2));
+        const pagamentoFinalArred = Number(total.toFixed(2));
+        const trocoCalculado = Number((novoValorPago - pagamentoFinalArred).toFixed(2));
+
+        if (novoValorPago >= pagamentoFinalArred) {
+          setTroco(trocoCalculado > 0 ? trocoCalculado : null);
+          setValorPagoTotal(0);
+          setValorRestante(0);
+          setEsperandoValorRecebido(false);
+          setCodigo("");
+          setAguardandoImpressao(true);
+          setMetodoPagamentoSelecionado("Dinheiro");
+        } else {
+          const valorRestanteArred = Number((pagamentoFinalArred - novoValorPago).toFixed(2));
+          setValorPagoTotal(novoValorPago);
+          setValorRestante(valorRestanteArred);
+          setMensagemAviso(`Faltam R$ ${valorRestanteArred.toFixed(2)}`);
+          setCodigo("");
+        }
+
+        return;
+      }
+
+      if (forma === "Pix") {
+        setModalPixAberto(true);
+        setMetodoPagamentoSelecionado('Pix');
+        finalizarVenda("Pix");
+        return;
+      }
+
+      const novoValorPago = Number((valorPagoTotal + total).toFixed(2));
+      const totalArred = Number(total.toFixed(2));
+      const trocoCalculado = Number((novoValorPago - totalArred).toFixed(2));
+
+      if (novoValorPago >= totalArred) {
+        setTroco(trocoCalculado > 0 ? trocoCalculado : null);
+        setValorPagoTotal(0);
+        setValorRestante(0);
+        setMensagemAviso("Venda finalizada com sucesso!");
+        setTimeout(() => finalizarVenda(forma), 3000);
+      } else {
+        const valorRestanteArred = Number((totalArred - novoValorPago).toFixed(2));
+        setValorPagoTotal(novoValorPago);
+        setValorRestante(valorRestanteArred);
+        setFasePagamento(true);
+      }
+
+      return;
+    }
+
+    if ((codigo || "").trim() === "") {
+      setCpfSolicitado(true);
+      return;
+    }
+
+    if (cpfSolicitado) {
+      const resposta = (codigo || "").trim().toLowerCase();
+
+      if (resposta === "s" || resposta === "sim") {
+        setModoCPF(true);
+        setCodigo("");
+        return;
+      }
+
+      if (resposta === "n" || resposta === "nao" || resposta === "não") {
+        setCpfSolicitado(false);
+        setFasePagamento(true);
+        setCodigo("");
+        return;
+      }
+
+      mostrarAviso("Digite sim ou não");
+      setCodigo("");
+      return;
+    }
+
+    adicionarProduto();
+  }
+};
+
 
     const mostrarAviso = (mensagem) => {
       setMensagemAviso(mensagem);
@@ -524,60 +505,57 @@ function Vendas() {
       return;
     }
 
-    const finalizarVenda = async () => {
-      try {
-        const dadosVenda = {
-          cliente_id: clienteId || null, // você pode usar null se for consumidor final
-          total: total,
-          metodo_pagamento: metodoPagamentoSelecionado, // ex: "pix", "cartao", etc.
-          criado_por: usuarioId, // ID do usuário logado
-          produtos: produtos.map((p) => ({
-            produto_id: p.id, // certifique-se de que `p.id` exista
-            quantidade: p.quantidade,
-            preco: p.preco,
-          })),
-        };
+useEffect(() => {
+  if (troco !== null) {
+    const timer = setTimeout(() => {
+      // Chame sua função para finalizar a venda aqui, ex:
+      finalizarVenda();
+    }, 5000);
 
-        const response = await fetch("http://localhost:3001/vendas", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(dadosVenda),
-        });
+    return () => clearTimeout(timer); // limpa se troco mudar antes dos 5s
+  }
+}, [troco]);
 
-        if (!response.ok) {
-          throw new Error("Erro ao registrar venda no banco de dados.");
-        };
+const finalizarVenda = async () => {
+  try {
+    const dadosVenda = {
+      venda_id: vendaId,
+      cliente_id: clienteId || null,
+      total: total,
+      metodo_pagamento: metodoPagamentoSelecionado,
+      criado_por: usuarioId,
+      produtos: produtos.map((p) => ({
+        produto_id: p.id,
+        quantidade: p.quantidade,
+        preco_unitario: p.preco_venda || p.preco || 0, // corrigido aqui
+      })),
+    };
 
-        const result = await response.json();
-        console.log("Venda registrada com sucesso:", result);
+      console.log("Enviando dados da venda:", JSON.stringify(dadosVenda, null, 2));
 
-        // Resetar dados da venda
-        setProdutos([]);
-        setCodigo("");
-        setTroco(null);
-        setVerificandoMaquina(false);
-        setModoParcelamento(false);
-        setEtapaCartao("");
-        setEsperandoValorRecebido(false);
-        setModoCPF(false);
-        setModoCreditoDebito(false);
-        setValorRestante(0);
-        setFasePagamento(false);
-        setCpfSolicitado(false);
-        setModoQuantidade(false);
-        setMensagemAviso("Venda finalizada com sucesso!");
-        setModalPixAberto(false);
-          setTimeout(() => {
-    setMensagemAviso("");
-  }, 3000);
-        // Redirecionar ou mostrar modal, se necessário
-      } catch (error) {
-        console.error("Erro ao finalizar venda:", error);
-        setMensagemAviso("Erro ao registrar venda. Tente novamente.");
-      }
+    const res = await fetch("http://localhost:3001/vendas/finalizar", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(dadosVenda),
+    });
+
+    const data = await res.json();
+
+    if (data.sucesso) {
+      mostrarAviso("Venda concluída com sucesso!");
+      setProdutos([]);
+      setTotal(0);
+      setVendaId(null); // zera para próxima venda
+    } else {
+      mostrarAviso("Erro ao concluir venda.");
     }
+  } catch (error) {
+    console.error("Erro ao finalizar venda:", error);
+    mostrarAviso("Erro ao finalizar venda.");
+  }
+};
+
+
 
   return (
     <div className="cont-principal">
