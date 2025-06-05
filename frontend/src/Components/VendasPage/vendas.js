@@ -32,10 +32,6 @@ function Vendas() {
     const [modalPixAberto, setModalPixAberto] = useState(false);
     const [vendaId, setVendaId] = useState(null);
 
-
-
-
-
     const cancelarVenda = () => {
       // Limpa os produtos adicionados à venda
       setProdutos([]);
@@ -148,7 +144,6 @@ const adicionarProduto = async () => {
   }
 };
 
-
     const editarProduto = (index, novaQuantidade) => {
       setProdutos((prevProdutos) => {
       if (novaQuantidade <= 0) return mostrarAviso("Quantidade inválida");
@@ -202,7 +197,6 @@ const adicionarProduto = async () => {
     return () => clearTimeout(timer); // limpa timeout se componente for desmontado
   }
 }, [aguardandoImpressao]);
-
 
 const handleKeyDown = (e) => {
   if (e.key === "Enter") {

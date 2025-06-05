@@ -7,29 +7,55 @@ function Estoque(){
   const [modalAberto, setModalAberto] = useState(false);
   const [modoEdicao, setModoEdicao] = useState(false);
   const [produtoEditadoId, setProdutoEditadoId] = useState(null);
-
+  const [produtosFiltrados, setProdutosFiltrados] = useState([]);
+  const [termoBusca, setTermoBusca] = useState('');
 
   const carregarProdutos = async () => {
     try {
-      const resposta = await axios.get('http://localhost:3001/produtos'); // Ajuste a URL se for diferente
+      const resposta = await axios.get('http://localhost:3001/produtos');
       setProdutos(resposta.data);
-      console.log(resposta);
+      setProdutosFiltrados(resposta.data); // inicialmente mostra todos
     } catch (erro) {
       console.error('Erro ao buscar produtos:', erro);
     }
   };
+
+  useEffect(() => {
+    carregarProdutos();
+  }, []);
 
   const [formData, setFormData] = useState({
     nome: '',
     descricao: '',
     preco_custo: '',
     preco_venda: '',
+    estoque_minimo: '', 
     estoque: '',
     categoria_id: '',
     codigo_barras: '',
     imagem: '',
     criado_por: '', 
   });
+
+  const filtrarProdutos = () => {
+    if (!termoBusca) {
+      setProdutosFiltrados(produtos);
+      return;
+    }
+
+    const buscaMinuscula = termoBusca.toLowerCase();
+
+    const filtrados = produtos.filter((produto) => {
+      // verifica se o termo está em nome, descrição ou código de barras
+      return (
+        (produto.nome && produto.nome.toLowerCase().includes(buscaMinuscula)) ||
+        (produto.descricao && produto.descricao.toLowerCase().includes(buscaMinuscula)) ||
+        (produto.codigo_barras && produto.codigo_barras.toLowerCase().includes(buscaMinuscula))
+      );
+    });
+
+    setProdutosFiltrados(filtrados);
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -38,6 +64,12 @@ function Estoque(){
       [name]: value,
     }));
   };
+
+  const handleSubmitBusca = (e) => {
+    e.preventDefault();
+    filtrarProdutos();
+  };
+
 
   const excluirProduto = async (id) => {
   const confirmar = window.confirm('Tem certeza que deseja excluir este produto?');
@@ -82,6 +114,7 @@ const handleSubmit = async (e) => {
         descricao: '',
         preco_custo: '',
         preco_venda: '',
+        estoque_minimo: '',  
         estoque: '',
         categoria_id: '',
         codigo_barras: '',
@@ -92,6 +125,7 @@ const handleSubmit = async (e) => {
       setModoEdicao(false);
       setProdutoEditadoId(null);
       carregarProdutos();
+      carregarResumo();
     } else {
       alert(data.mensagem || 'Erro ao salvar produto');
     }
@@ -109,6 +143,7 @@ const handleSubmit = async (e) => {
     descricao: produto.descricao || '',
     preco_custo: produto.preco_custo || '',
     preco_venda: produto.preco_venda || '',
+    estoque_minimo: produto.estoque_minimo || '',
     estoque: produto.estoque || '',
     categoria_id: produto.categoria_id || '',
     codigo_barras: produto.codigo_barras || '',
@@ -118,22 +153,52 @@ const handleSubmit = async (e) => {
   setModalAberto(true);
 };
 
+const [resumo, setResumo] = useState({
+  totalProdutos: 0,
+  totalUnidades: 0,
+  valorEstoque: 0,
+  baixoEstoque: 0,
+  esgotados: 0
+});
+
+const carregarResumo = async () => {
+  try {
+    const resposta = await axios.get('http://localhost:3001/estoque/resumo');
+    setResumo(resposta.data);
+  } catch (erro) {
+    console.error('Erro ao buscar resumo:', erro);
+  }
+};
+
+
   useEffect(() => {
     carregarProdutos();
+    carregarResumo();
   }, [])
+
+
+
+  /*Incluir depois no Top-bar
+  
+            <form className='formulario' onSubmit={handleSubmitBusca}>
+              <input
+              type="text"
+              placeholder="Pesquise por nome, descrição ou código do produto"
+              className="search-input"
+              value={termoBusca}
+              onChange={(e) => setTermoBusca(e.target.value)}
+              />
+              <button className="pesquisar" type='submit'>
+                <img src="../icon_lupa.svg" alt="lupa"></img>
+              </button>
+            </form>  
+   */
 
     return(
       <div className="cont-principal">
          <div className="container">
           <div className="top-bar">
-              <input
-              type="text"
-              placeholder="Pesquise por nome, descrição ou número da venda"
-              className="search-input"
-              />
-              <button className="pesquisar">
-                  <img src="./icons/icon_lupa.svg" className="immg_pesquisa" alt="lupa"></img>
-              </button>
+          
               <button className="add-button" onClick={() => setModalAberto(true)}>Adicionar Produto</button>
               {modalAberto && (
                 <div className="modal-overlay">
@@ -144,6 +209,7 @@ const handleSubmit = async (e) => {
                       <input name="descricao" placeholder="Descrição" value={formData.descricao} onChange={handleChange} />
                       <input name="preco_custo" placeholder="Preço de Custo" value={formData.preco_custo} onChange={handleChange} />
                       <input name="preco_venda" placeholder="Preço de Venda" value={formData.preco_venda} onChange={handleChange} />
+                      <input name="estoque_minimo"  placeholder="Estoque Mínimo"  value={formData.estoque_minimo}  onChange={handleChange}/>
                       <input name="estoque" placeholder="Estoque" value={formData.estoque} onChange={handleChange} />
                       <input name="categoria_id" placeholder="ID Categoria" value={formData.categoria_id} onChange={handleChange} />
                       <input name="codigo_barras" placeholder="Código de Barras" value={formData.codigo_barras} onChange={handleChange} />
@@ -160,39 +226,65 @@ const handleSubmit = async (e) => {
               )}
           </div>
 
-          <table className="product-table">
-            <thead>
-              <tr>
-                <th>Código</th>
-                <th>Produto</th>
-                <th>Categoria</th>
-                <th>Estoque</th>
-                <th>Preço Custo</th>
-                <th>Preço Venda</th>
-                <th>Última Entrada</th>
-              </tr>
-            </thead>
-            <tbody >
-              {produtos.map((produto) => (
-                <tr key={produto.id} className='linha-produto'>
-                  <td>{produto.codigo_barras}</td>
-                  <td>{produto.nome}</td>
-                  <td>{produto.categoria_id || '---'}</td>
-                  <td>{produto.estoque}</td>
-                  <td>{Number(produto.preco_custo)?.toFixed(2)}</td>  
-                  <td>{Number(produto.preco_venda)?.toFixed(2)}</td>
-                  <td className="celula-entrada">
-                    <span className="data">{produto.ultima_entrada ? new Date(produto.ultima_entrada).toLocaleDateString() : '---'}</span>
-                    <div className="acoes">
-                      <button onClick={() => abrirModalEdicao(produto)} className="botao-acao">✏️</button>
-                      <button onClick={() => excluirProduto(produto.id)} className="botao-acao">🗑️</button>
-                    </div>
-                  </td>
+          <div className='tabela-container'>
+              <table className="product-table">
+                <thead>
+                  <tr>
+                    <th>Código</th>
+                    <th>Produto</th>
+                    <th>Categoria</th>
+                    <th>Estoque</th>
+                    <th>Preço Custo</th>
+                    <th>Preço Venda</th>
+                    <th>Última Entrada</th>
+                  </tr>
+                </thead>
+                <tbody >
+                  {produtos.map((produto) => (
+                    <tr key={produto.id} className='linha-produto'>
+                      <td>{produto.codigo_barras}</td>
+                      <td>{produto.nome}</td>
+                      <td>{produto.nome_categoria || '---'}</td>
+                      <td>{produto.estoque}</td>
+                      <td>{Number(produto.preco_custo)?.toFixed(2)}</td>  
+                      <td>{Number(produto.preco_venda)?.toFixed(2)}</td>
+                      <td className="celula-entrada">
+                        <span className="data">{produto.ultima_entrada ? new Date(produto.ultima_entrada).toLocaleDateString() : '---'}</span>
+                        <div className="acoes">
+                          <button onClick={() => abrirModalEdicao(produto)} className="botao-acao">✏️</button>
+                          <button onClick={() => excluirProduto(produto.id)} className="botao-acao">🗑️</button>
+                        </div>
+                      </td>
 
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+          </div>
+          
+          <div class="dashboard-stats">
+            <div class="stat-card">
+              <h4>Total de Produtos</h4>
+              <p>{resumo.totalProdutos}</p>
+            </div>
+            <div class="stat-card">
+              <h4>Total em Estoque</h4>
+              <p>{resumo.totalUnidades} unidades</p>
+            </div>
+            <div class="stat-card">
+              <h4>Valor do Estoque</h4>
+              <p>R$ {Number(resumo.valorEstoque).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+            </div>
+            <div class="stat-card" >
+              <h4>Estoque Baixo</h4>
+              <p>{resumo.baixoEstoque} produtos</p>
+            </div>
+            <div class="stat-card">
+              <h4>Esgotados</h4>
+              <p>{resumo.esgotados} produtos</p>
+            </div>
+          </div>
+
         </div>
       </div>
     );

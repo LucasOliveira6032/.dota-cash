@@ -41,12 +41,13 @@ aside {
 .usuario-menu {
   position: relative;
   display: inline-block;
+  top: 4px;
 }
 
 .icone-usuario {
   font-size: 24px;
   cursor: pointer;
-  margin-left: 50rem;
+  margin-left: 80rem;
 }
 
 .menu-dropdown {

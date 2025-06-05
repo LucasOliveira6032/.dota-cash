@@ -6,13 +6,20 @@ const router = express.Router();
 // Listar todos os produtos
 router.get('/', async (req, res) => {
   try {
-    const [rows] = await pool.execute('SELECT * FROM produtos');
+    const [rows] = await pool.execute(`
+      SELECT 
+        p.*, 
+        c.nome AS nome_categoria
+      FROM produtos p
+      LEFT JOIN categorias c ON p.categoria_id = c.id
+    `);
     res.json(rows);
   } catch (error) {
     console.error('Erro ao listar produtos:', error);
     res.status(500).json({ mensagem: 'Erro ao listar produtos' });
   }
 });
+
 
 // Buscar produto por código de Barras
 router.get("/:codigo", async (req, res) => {
@@ -42,6 +49,7 @@ router.post('/', async (req, res) => {
     descricao,
     preco_custo,
     preco_venda,
+    estoque_minimo,
     estoque,
     categoria_id,
     codigo_barras,
@@ -52,14 +60,15 @@ router.post('/', async (req, res) => {
   try {
     const [result] = await pool.execute(
       `INSERT INTO produtos (
-        nome, descricao, preco_custo, preco_venda, estoque,
+        nome, descricao, preco_custo, preco_venda, estoque_minimo, estoque,
         categoria_id, codigo_barras, imagem, criado_por
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         nome ?? null,
         descricao ?? null,
         preco_custo ?? null,
         preco_venda ?? null,
+        estoque_minimo ?? null,
         estoque ?? null,
         categoria_id ?? null,
         codigo_barras ?? null,
@@ -91,20 +100,6 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
-// Excluir produto
-router.delete('/:id', async (req, res) => {
-  const { id } = req.params;
-  try {
-    const [result] = await pool.execute('DELETE FROM produtos WHERE id = ?', [id]);
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ mensagem: 'Produto não encontrado' });
-    }
-    res.json({ mensagem: 'Produto excluído com sucesso' });
-  } catch (error) {
-    console.error('Erro ao excluir produto:', error);
-    res.status(500).json({ mensagem: 'Erro ao excluir produto' });
-  }
-});
 
 // Editar produto
 router.put('/:id', async (req, res) => {
@@ -114,6 +109,7 @@ router.put('/:id', async (req, res) => {
     descricao,
     preco_custo,
     preco_venda,
+    estoque_minimo,
     estoque,
     categoria_id,
     codigo_barras,
@@ -125,15 +121,16 @@ router.put('/:id', async (req, res) => {
     // Atualiza o produto pelo id
     const [resultado] = await pool.execute(
       `UPDATE produtos SET 
-        nome = ?, descricao = ?, preco_custo = ?, preco_venda = ?,
+        nome = ?, descricao = ?, preco_custo = ?, preco_venda = ?, estoque_minimo = ?,
         estoque = ?, categoria_id = ?, codigo_barras = ?, imagem = ?, criado_por = ?
       WHERE id = ?`,
       [
-        nome, descricao, preco_custo, preco_venda,
+        nome, descricao, preco_custo, preco_venda, estoque_minimo,
         estoque, categoria_id, codigo_barras, imagem, criado_por,
         id
       ]
     );
+    
 
     if (resultado.affectedRows === 0) {
       return res.status(404).json({ mensagem: 'Produto não encontrado' });
