@@ -4,6 +4,52 @@ const router = express.Router();
 const pool = require("../db"); // Seu pool de conexão com mysql2
 
 
+router.get("/", async (req, res) => {
+  try {
+    const [vendas] = await pool.execute(`
+      SELECT 
+        v.id, 
+        DATE_FORMAT(v.criado_em, '%Y-%m-%d') AS data,
+        c.nome AS cliente,
+        v.total,
+        v.metodo_pagamento
+      FROM vendas v
+      LEFT JOIN clientes c ON v.cliente_id = c.id
+      ORDER BY v.id DESC
+    `);
+    res.json(vendas);
+  } catch (error) {
+    console.error("Erro ao buscar vendas:", error);
+    res.status(500).json({ erro: "Erro ao buscar vendas." });
+  }
+});
+
+
+// GET /vendas/:id/detalhes
+router.get("/:id/detalhes", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const [itens] = await pool.execute(`
+      SELECT 
+        p.nome,
+        iv.quantidade,
+        iv.preco_unitario,
+        (iv.quantidade * iv.preco_unitario) AS subtotal
+      FROM itens_venda iv
+      JOIN produtos p ON iv.produto_id = p.id
+      WHERE iv.venda_id = ?
+    `, [id]);
+
+    res.json({ itens });
+  } catch (error) {
+    console.error("Erro ao buscar itens da venda:", error);
+    res.status(500).json({ erro: "Erro ao buscar itens da venda." });
+  }
+});
+
+
+
 router.post("/iniciar", async (req, res) => {
   try {
     const [result] = await pool.execute(

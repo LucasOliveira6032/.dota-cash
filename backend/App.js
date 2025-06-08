@@ -13,6 +13,7 @@ const clientes = require('./routes/clientes');
 const vendas = require('./routes/vendas')
 const estoqueRoutes = require('./routes/estoque');
 
+
 // Usar as rotas
 app.use('/login', loginRoutes);
 app.use('/trocar-senha', trocarSenha);

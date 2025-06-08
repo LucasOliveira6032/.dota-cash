@@ -13,6 +13,8 @@ function Login() {
   const [senha, setSenha] = useState('');
   const [mensagem, setMensagem] = useState('');
   const navigate = useNavigate();
+  const [mostrarMensagem, setMostrarMensagem] = useState(false);
+
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -68,7 +70,22 @@ function Login() {
             onChange={(e) => setSenha(e.target.value)}
             required
           />
-          <div className="forgot-password">Esqueci minha senha</div>
+          <div 
+            className="forgot-password"
+            onClick={() => setMostrarMensagem(!mostrarMensagem)}
+            tabIndex={0} // para ficar focável no teclado
+            onBlur={() => setMostrarMensagem(false)} // esconde mensagem quando clicar fora
+            role="button"
+            aria-expanded={mostrarMensagem}
+          >
+            Esqueci minha senha
+            {mostrarMensagem && (
+              <div className="mensagem-suporte">
+                Entre em contato com o setor de Suporte .dotta/Cash para reaver as credenciais de login
+              </div>
+            )}
+          </div>
+
           <button type="submit">Entrar</button>
         </form>
         {mensagem && <p className="mensagem">{mensagem}</p>}

@@ -114,8 +114,9 @@ router.put('/:id', async (req, res) => {
     categoria_id,
     codigo_barras,
     imagem,
-    criado_por,
   } = req.body;
+
+  const { criado_por } = req.body;
 
   try {
     // Atualiza o produto pelo id
@@ -130,6 +131,7 @@ router.put('/:id', async (req, res) => {
         id
       ]
     );
+
     
 
     if (resultado.affectedRows === 0) {

@@ -9,6 +9,7 @@ function Estoque(){
   const [produtoEditadoId, setProdutoEditadoId] = useState(null);
   const [produtosFiltrados, setProdutosFiltrados] = useState([]);
   const [termoBusca, setTermoBusca] = useState('');
+  const usuarioId = localStorage.getItem('usuarioId');
 
   const carregarProdutos = async () => {
     try {
@@ -97,12 +98,15 @@ const handleSubmit = async (e) => {
 
     const method = modoEdicao ? 'PUT' : 'POST';
 
+    // Cria um novo objeto com o usuário que criou/alterou
+    const dataToSend = { ...formData, criado_por: usuarioId };
+
     const response = await fetch(url, {
       method,
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(formData),
+      body: JSON.stringify(dataToSend),  // envia o criado_por aqui
     });
 
     const data = await response.json();
@@ -119,7 +123,7 @@ const handleSubmit = async (e) => {
         categoria_id: '',
         codigo_barras: '',
         imagem: '',
-        criado_por: '',
+        criado_por: '', // pode limpar pois enviou separado
       });
       setModalAberto(false);
       setModoEdicao(false);
@@ -134,6 +138,7 @@ const handleSubmit = async (e) => {
     alert('Erro na comunicação com o servidor');
   }
 };
+
 
   const abrirModalEdicao = (produto) => {
   setModoEdicao(true);
@@ -202,20 +207,19 @@ const carregarResumo = async () => {
               <button className="add-button" onClick={() => setModalAberto(true)}>Adicionar Produto</button>
               {modalAberto && (
                 <div className="modal-overlay">
-                  <div className="modal-pix">
+                  <div className="modal-form">
                     <h3>{modoEdicao ? 'Editar Produto' : 'Adicionar Novo Produto'}</h3>
                     <form onSubmit={handleSubmit} className="form-produto">
-                      <input name="nome" placeholder="Nome" value={formData.nome} onChange={handleChange} required />
-                      <input name="descricao" placeholder="Descrição" value={formData.descricao} onChange={handleChange} />
-                      <input name="preco_custo" placeholder="Preço de Custo" value={formData.preco_custo} onChange={handleChange} />
-                      <input name="preco_venda" placeholder="Preço de Venda" value={formData.preco_venda} onChange={handleChange} />
-                      <input name="estoque_minimo"  placeholder="Estoque Mínimo"  value={formData.estoque_minimo}  onChange={handleChange}/>
-                      <input name="estoque" placeholder="Estoque" value={formData.estoque} onChange={handleChange} />
-                      <input name="categoria_id" placeholder="ID Categoria" value={formData.categoria_id} onChange={handleChange} />
-                      <input name="codigo_barras" placeholder="Código de Barras" value={formData.codigo_barras} onChange={handleChange} />
-                      <input name="imagem" placeholder="URL da Imagem" value={formData.imagem} onChange={handleChange} />
-                      <input name="criado_por" placeholder="Criado por" value={formData.criado_por} onChange={handleChange} />
-
+                      <div className='cont-inputs'>
+                        <input name="nome" placeholder="Nome" value={formData.nome} onChange={handleChange} required />
+                        <input name="descricao" placeholder="Descrição" value={formData.descricao} onChange={handleChange} />
+                        <input name="preco_custo" placeholder="Preço de Custo" value={formData.preco_custo} onChange={handleChange} />
+                        <input name="preco_venda" placeholder="Preço de Venda" value={formData.preco_venda} onChange={handleChange} />
+                        <input name="estoque_minimo"  placeholder="Estoque Mínimo"  value={formData.estoque_minimo}  onChange={handleChange}/>
+                        <input name="estoque" placeholder="Estoque" value={formData.estoque} onChange={handleChange} />
+                        <input name="categoria_id" placeholder="ID Categoria" value={formData.categoria_id} onChange={handleChange} />
+                        <input name="codigo_barras" placeholder="Código de Barras" value={formData.codigo_barras} onChange={handleChange} />
+                      </div>
                       <div className="form-buttons">
                         <button type="submit">Salvar</button>
                         <button type="button" onClick={() => setModalAberto(false)}>Cancelar</button>

@@ -68,3 +68,76 @@ aside {
   width: 100%;
   text-align: left;
 }
+
+.cont-primeiro-acesso{
+    position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.overlay-modal {
+  background-color: rgba(93, 40, 4, 0.712);
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+}
+
+/* Conteúdo do modal (o "formulário") */
+.cont-primeiro-acesso {
+  top: 50%;
+  left: 50%;
+  min-width: 400px;
+  padding: 30px;
+  transform: translate(-50%, -50%);
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+  z-index: 1000;
+}
+
+.cont-primeiro-acesso h2 {
+  font-size: 1.5rem;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.cont-primeiro-acesso input {
+  width: 100%;
+  padding: 12px;
+  margin: 10px 0;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 1rem;
+}
+
+.cont-primeiro-acesso button {
+  width: 48%;
+  margin: 8px 1%;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.cont-primeiro-acesso button:first-of-type {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.cont-primeiro-acesso button:last-of-type {
+  background-color: #f44336;
+  color: white;
+}
+
+.cont-primeiro-acesso button:hover {
+  opacity: 0.9;
+}

@@ -1,0 +1,167 @@
+.historico-container {
+  padding: 20px;
+  font-family: Arial, sans-serif;
+}
+
+h2 {
+  margin-bottom: 20px;
+}
+
+.filtros {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+.filtros label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.filtros input,
+.filtros select {
+  padding: 5px;
+  width: 150px;
+  border-radius: 12px;
+  height: 3em;
+  border: 2px solid #ccc;
+  filter: drop-shadow(0 0 1rem #4443433d);
+}
+
+.conteudo {
+  display: flex;
+  gap: 20px;
+}
+
+.tabela-vendas-wrapper {
+  flex: 1;
+  transition: width 0.3s ease;
+  max-height: 600px;
+  overflow: auto;
+}
+
+.historico-container.com-detalhes .tabela-vendas-wrapper {
+  flex: 0 0 55%;
+}
+
+.tabela-vendas {
+  width: 100%;
+  height: 50%;
+  
+  border-collapse: separate;
+  border-spacing: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+
+.tabela-vendas td{
+  background-color: #f9f9f9;
+}
+
+.tabela-vendas th, .tabela-vendas td {
+  padding: 10px;
+  text-align: center;
+}
+
+.tabela-vendas th {
+  background-color: #c4c4c4;
+}
+
+.botao-detalhes {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.botao-detalhes:hover {
+  background-color: #0056b3;
+}
+
+/* Detalhes da Venda */
+.detalhes-venda {
+  flex: 0 0 45%;
+  height: 600px;
+  background-color: #f9f9f9;
+  border-left: 2px solid #ccc;
+  padding: 20px;
+  border-radius: 8px;
+}
+
+.detalhes-venda h3 {
+  margin-bottom: 15px;
+}
+
+.acoes-detalhes {
+  margin-top: 20px;
+  display: flex;
+  gap: 10px;
+}
+
+.botao-cancelar {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.botao-cancelar:hover {
+  background-color: #b02a37;
+}
+
+.botao-imprimir {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.botao-imprimir:hover {
+  background-color: #1e7e34;
+}
+
+.fechar-detalhes {
+  margin-top: 20px;
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.fechar-detalhes:hover {
+  background-color: #5a6268;
+}
+
+.title-text{
+  font-family: 'montserrat', sans-serif;
+  color: #22110c;
+}
+
+/* Barra de rolagem WebKit */
+.tabela-vendas-wrapper::-webkit-scrollbar {
+  width: 12px; /* largura da scrollbar */
+}
+
+/* Fundo da barra (track) - transparente */
+.tabela-vendas-wrapper::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Cor da "pegada" que a gente arrasta (thumb) */
+.tabela-vendas-wrapper::-webkit-scrollbar-thumb {
+  background-color: rgba(0,0,0,0.3); /* você pode mudar */
+  border-radius: 6px;
+  border: 3px solid transparent; /* para criar espaçamento */
+  background-clip: content-box; /* mantém o espaço transparente */
+}
