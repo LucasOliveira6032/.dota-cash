@@ -15,7 +15,7 @@ const Sidebar = () => {
   const botoes = [
     { id: 0, rota: '/Inicio', icon: CalculadoraIcon},
     { id: 1, rota: 'Histórico-de-vendas', icon: HistoricoIcon },
-    { id: 2, rota: 'Estoque', icon: EstoqueIcon },
+    { id: 2, rota: 'Estoque', icon: EstoqueIcon },  
   ];
 
 
