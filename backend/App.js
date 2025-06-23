@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const app = express();
 
-
+//acesso vercel
 const allowedOrigins = ['https://dota-cash-3p88.vercel.app'];
 app.use(cors(
   {
