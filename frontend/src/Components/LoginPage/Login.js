@@ -14,13 +14,14 @@ function Login() {
   const [mensagem, setMensagem] = useState('');
   const navigate = useNavigate();
   const [mostrarMensagem, setMostrarMensagem] = useState(false);
+  const apiUrl = process.env.REACT_APP_API_URL;
 
 
   const handleLogin = async (e) => {
     e.preventDefault();
 
     try {
-      const resposta = await fetch('http://localhost:3001/login', {
+      const resposta = await fetch(`${apiUrl}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ usuario, senha }),
