@@ -5,6 +5,7 @@ import 'jspdf-autotable';
 
 
 const Hist_Vendas = () => {
+  const apiUrl = process.env.REACT_APP_API_URL;
   const [filtroDataInicial, setFiltroDataInicial] = useState('');
   const [filtroDataFinal, setFiltroDataFinal] = useState('');
 

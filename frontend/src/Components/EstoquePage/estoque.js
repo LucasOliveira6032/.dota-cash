@@ -3,6 +3,7 @@ import './estoque.css';
 import axios from 'axios';
 
 function Estoque(){
+  const apiUrl = process.env.REACT_APP_API_URL;
   const [produtos, setProdutos] = useState([]);
   const [modalAberto, setModalAberto] = useState(false);
   const [modoEdicao, setModoEdicao] = useState(false);
@@ -13,7 +14,7 @@ function Estoque(){
 
   const carregarProdutos = async () => {
     try {
-      const resposta = await axios.get('http://localhost:3001/produtos');
+      const resposta = await axios.get(`${apiUrl}/produtos`);
       setProdutos(resposta.data);
       setProdutosFiltrados(resposta.data); // inicialmente mostra todos
     } catch (erro) {
@@ -77,7 +78,7 @@ function Estoque(){
   if (!confirmar) return;
 
   try {
-    const resposta = await axios.delete(`http://localhost:3001/produtos/${id}`);
+    const resposta = await axios.delete(`${apiUrl}/produtos/${id}`);
     if (resposta.status === 200) {
       alert('Produto excluído com sucesso!');
       carregarProdutos(); // Atualiza a lista
@@ -93,8 +94,8 @@ const handleSubmit = async (e) => {
 
   try {
     const url = modoEdicao
-      ? `http://localhost:3001/produtos/${produtoEditadoId}`
-      : 'http://localhost:3001/produtos';
+      ? `${apiUrl}/produtos/${produtoEditadoId}`
+      : `S${apiUrl}/produtos`;
 
     const method = modoEdicao ? 'PUT' : 'POST';
 
@@ -168,7 +169,7 @@ const [resumo, setResumo] = useState({
 
 const carregarResumo = async () => {
   try {
-    const resposta = await axios.get('http://localhost:3001/estoque/resumo');
+    const resposta = await axios.get(`${apiUrl}/estoque/resumo`);
     setResumo(resposta.data);
   } catch (erro) {
     console.error('Erro ao buscar resumo:', erro);
