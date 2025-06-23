@@ -2,7 +2,10 @@ const express = require('express');
 const cors = require('cors');
 const app = express();
 
-app.use(cors());
+app.use(cors({
+    origin: 'https://dota-cash-3p88.vercel.app', // Configuração de CORS para frontend na Vercel
+    credentials: true
+}));
 app.use(express.json());
 
 // Importar rotas separadas
