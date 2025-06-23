@@ -2,7 +2,20 @@ const express = require('express');
 const cors = require('cors');
 const app = express();
 
-app.use(cors());
+
+const allowedOrigins = ['https://dota-cash-3p88.vercel.app'];
+app.use(cors(
+  {
+  origin: function(origin, callback) {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    } else {
+      return callback(new Error('Not allowed by CORS'));
+    }
+  }
+}
+));
 app.use(express.json());
 
 // Importar rotas separadas
