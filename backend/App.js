@@ -22,4 +22,8 @@ app.use("/clientes", clientes);
 app.use('/vendas', vendas);
 app.use('/estoque', estoqueRoutes);
 
+app.get('/', (req, res) => {
+  res.send('API do .dotta-cash está online!');
+});
+
 module.exports = app;
