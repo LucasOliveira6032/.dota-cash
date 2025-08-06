@@ -20,6 +20,18 @@ app.get('/', (req, res) => {
 const loginRoutes = require('./routes/login');
 app.use('/', loginRoutes);
 
+const produtoRoutes = require('./routes/produtos');
+app.use('/produtos', produtoRoutes);
+
+const estoqueRoutes = require('./routes/estoque');
+app.use('/estoque', estoqueRoutes);
+
+const trocarSenhaRoutes = require('./routes/trocarSenha');
+app.use('/trocarSenha', trocarSenhaRoutes);
+
+const vendasRoutes = require('./routes/vendas');
+app.use('/vendas', vendasRoutes);
+
 // Outras rotas, como /produtos, etc.
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

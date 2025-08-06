@@ -35,6 +35,7 @@ function Vendas() {
     const [qrCodeBase64, setQrCodeBase64] = useState(null);
     const [pagamentoId, setPagamentoId] = useState(null);
     const [intervaloVerificacao, setIntervaloVerificacao] = useState(null);
+    const apiUrl = process.env.REACT_APP_API_URL;
 
 
     const cancelarVenda = () => {
@@ -65,7 +66,7 @@ function Vendas() {
 const adicionarProduto = async () => {
   if (!vendaId) {
   try {
-    const res = await fetch("http://localhost:3001/vendas/iniciar", {
+    const res = await fetch(`${apiUrl}/vendas/iniciar`, {
       method: "POST",
     });
 
@@ -87,7 +88,7 @@ const adicionarProduto = async () => {
       return;
     }
 
-    const response = await fetch(`http://localhost:3001/produtos/${codigoLimpo}`);
+    const response = await fetch(`${apiUrl}/produtos/${codigoLimpo}`);
 
     if (!response.ok) {
       mostrarAviso("Produto não encontrado.");
@@ -438,7 +439,7 @@ const adicionarProduto = async () => {
 
     async function buscarClientePorCPF(cpf) {
       try {
-        const response = await fetch(`http://localhost:3001/clientes/buscar-por-cpf/${cpf}`);
+        const response = await fetch(`${apiUrl}/clientes/buscar-por-cpf/${cpf}`);
         
         if (!response.ok) {
           if (response.status === 404) {
@@ -535,7 +536,7 @@ const finalizarVenda = async (formaPagamento) => {
 
     console.log("Enviando dados da venda:", JSON.stringify(dadosVenda, null, 2));
 
-    const res = await fetch("http://localhost:3001/vendas/finalizar", {
+    const res = await fetch(`${apiUrl}/vendas/finalizar`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(dadosVenda),
