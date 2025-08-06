@@ -16,8 +16,9 @@ const loginRoutes = require('./routes/login');
 app.use('/', loginRoutes);
 
 // Outras rotas, como /produtos, etc.
-app.listen(port, () => {
-  console.log(`Servidor backend rodando em http://localhost:${port}`);
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Servidor rodando na porta ${PORT}`);
 });
 
 
