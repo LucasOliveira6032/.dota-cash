@@ -6,7 +6,8 @@ require('dotenv').config();
 
 const router = express.Router();
 
-router.post('/', async (req, res) => {
+// ROta correta para chamada do login
+router.post('/login', async (req, res) => {
   
   const { usuario, senha } = req.body;
 
