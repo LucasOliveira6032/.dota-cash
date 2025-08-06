@@ -3,12 +3,13 @@ const app = express();
 const port = process.env.PORT || 3001;
 const cors = require('cors');
 
-
+const allowedOrigins = ['https://dota-cash-3p88.vercel.app'];
 app.use(cors({
-  origin: 'https://dota-cash-3p88.vercel.app', // ou '*', para testes
+  origin: allowedOrigins, 
   methods: ['GET', 'POST'],
   credentials: true
-}));
+}
+));
 
 app.use(express.json());
 
