@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import './estoque.css';
 import axios from 'axios';
 
+//Pagina pronta
+
 function Estoque(){
   const apiUrl = process.env.REACT_APP_API_URL;
   const [produtos, setProdutos] = useState([]);

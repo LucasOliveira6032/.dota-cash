@@ -4,6 +4,7 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 
 
+
 const Hist_Vendas = () => {
   const apiUrl = process.env.REACT_APP_API_URL;
   const [filtroDataInicial, setFiltroDataInicial] = useState('');
@@ -18,7 +19,7 @@ const Hist_Vendas = () => {
   const carregarDetalhesVenda = async (venda) => {
   setVendaSelecionada(venda);
   try {
-    const response = await fetch(`http://localhost:3001/vendas/${venda.id}/detalhes`);
+    const response = await fetch(`${apiUrl}/vendas/${venda.id}/detalhes`);
     const data = await response.json();
     console.log("Resposta de /vendas:", data);
 
@@ -31,7 +32,7 @@ const Hist_Vendas = () => {
 useEffect(() => {
   const buscarVendas = async () => {
     try {
-      const response = await fetch("http://localhost:3001/vendas");
+      const response = await fetch(`${apiUrl}/vendas`);
       const data = await response.json();
 
       console.log("Vendas carregadas:", data);

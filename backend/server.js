@@ -13,6 +13,10 @@ app.use(cors({
 
 app.use(express.json());
 
+app.get('/', (req, res) => {
+  res.send('API .dotta/cash está no ar!');
+});
+
 const loginRoutes = require('./routes/login');
 app.use('/', loginRoutes);
 
